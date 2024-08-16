@@ -94,6 +94,7 @@ def forward_and_adapt_deyo(x, iter_, model, args, optimizer, deyo_margin, margin
     Measure entropy of the model prediction, take gradients, and update params.
     """
     outputs = model(x)
+    print(outputs)
     if not flag:
         return outputs
     

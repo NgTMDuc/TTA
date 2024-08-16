@@ -91,13 +91,17 @@ def train_and_test_erm(model, args):
     device = torch.device("cuda" if use_cuda else "cpu")
 
     kwargs = {'num_workers': args.workers, 'pin_memory': True} if use_cuda else {}
+    
     all_train_loader = torch.utils.data.DataLoader(
-      ColoredMNIST(root=args.root_dir, env='all_train',# flip=True,
-                   transform=transforms.Compose([
+      ColoredMNIST( root=args.root_dir, 
+                    env='all_train',# flip=True,
+                    transform=transforms.Compose([
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307, 0.1307, 0.), (0.3081, 0.3081, 0.3081))
                      ])),
-      batch_size=args.batch_size, shuffle=args.if_shuffle, **kwargs)
+                    batch_size=args.batch_size, 
+                    shuffle=args.if_shuffle, 
+                    **kwargs)
 
     test_loader = torch.utils.data.DataLoader(
       ColoredMNIST(root=args.root_dir, env='test',# flip=True,

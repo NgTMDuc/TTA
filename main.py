@@ -21,7 +21,17 @@ elif args.dset=='Waterbirds':
     args.data_corruption_file = os.path.join(args.data_root, args.dset, h5py_file)
 elif args.dset=='ColoredMNIST':
     args.data_corruption = os.path.join(args.data_root, args.dset)
+    
+elif args.dset == 'CIFAR10-C':  # Added handling for CIFAR10-C
+    # Set the path to the directory containing the corrupted CIFAR-10 data
+    args.data_corruption = os.path.join(args.data_root, 'CIFAR-10-C')
+
+    # Optional: You may want to set or validate the corruption type and severity here
+    if not hasattr(args, 'corruption_type') or not hasattr(args, 'severity'):
+        raise ValueError("CIFAR10-C requires 'corruption_type' and 'severity' to be specified.")
+    
 biased = (args.exp_type=='spurious')
+
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
@@ -39,7 +49,7 @@ from utils.cli_utils import *
 
 import torch    
 
-from methods import tent, eata, sam, sar, deyo
+from methods import tent, eata, sam, sar, deyo, deyo_new
 import timm
 
 import models.Res as Resnet
@@ -182,15 +192,23 @@ if __name__ == '__main__':
         args.num_class = 1000
     elif args.dset=='Waterbirds' or args.dset=='ColoredMNIST':
         args.num_class = 2
+    elif args.dset == "Cifar10-C":
+        args.num_class = 10
     print('The number of classes:', args.num_class)
     
     if args.dset=='Waterbirds':
         assert biased
         assert args.data_corruption_file.endswith('h5py')
         assert args.model == 'resnet50_bn_torch'
+    
     elif args.dset=='ColoredMNIST':
         assert biased
         assert args.model == 'resnet18_bn'
+    
+    elif args.dset== "Cifar10-C":
+        assert biased
+        assert args.model == "resnet18_bn"
+
     if biased:
         assert (args.dset=='Waterbirds' or args.dset=='ColoredMNIST')
         assert args.lr_mul == 5.0
@@ -412,6 +430,7 @@ if __name__ == '__main__':
                                                   ]))
                     fisher_loader = torch.utils.data.DataLoader(fisher_dataset, batch_size=args.test_batch_size,
                                                                 shuffle=args.if_shuffle, **kwargs)
+                # elif args.dset == ""
                 else:
                     fisher_dataset, fisher_loader = prepare_test_data(args)
                 fisher_dataset.set_dataset_size(args.fisher_size)
