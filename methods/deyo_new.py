@@ -62,7 +62,7 @@ class DeYO_Custom(nn.Module):
 
             optimizer = torch.optim.Adam([input_embedding], lr=0.001)
 
-            for _ in range(100):
+            for _ in range(500):
                 optimizer.zero_grad()
 
                 output = self.model.fc(input_embedding)
