@@ -4,7 +4,7 @@
 import os
 import argparse
 parser = argparse.ArgumentParser(description='Waterbirds pretrain')
-parser.add_argument('--root_dir', default=None, help='path to data')
+parser.add_argument('--root_dir', default="/mnt/disk1/ducntm/DATA", help='path to data')
 parser.add_argument('--dset_dir', default='ColoredMNIST', help='name of dataset directory')
 parser.add_argument('--gpu', default='0', type=str, help='gpu index for training.')
 parser.add_argument('--seed', default=2024, type=int, help='seed for initializing training.')
