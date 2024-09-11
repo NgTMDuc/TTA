@@ -43,11 +43,8 @@ class DeYO_Custom(nn.Module):
         self.deyo_margin = deyo_margin
         self.margin_e0 = margin_e0
         self.anchors, self.pseudo_labels = self.generate_anchor()
-        # self.model.eval()
         self.device = next(self.model.parameters()).device
         self.embedding = self.get_embedding_layer()
-        # self.embedding.eval()
-        # self.model.train()
         self.eps = args.alpha_cap
         self.num_sample = args.num_sim
         
@@ -63,7 +60,7 @@ class DeYO_Custom(nn.Module):
             input_embedding = torch.randn((1, self.model.fc.in_features)).to(next(self.model.parameters()).device)
             input_embedding.requires_grad = True
 
-            optimizer = torch.optim.Adam([input_embedding], lr=0.01)
+            optimizer = torch.optim.Adam([input_embedding], lr=0.001)
 
             for _ in range(100):
                 optimizer.zero_grad()
@@ -98,18 +95,23 @@ class DeYO_Custom(nn.Module):
     def mix_feature(self, ulb_embed, anchor, alpha):
         return (1 - alpha) * ulb_embed + alpha * anchor
     
-    def filter_sample(self, x, eps, anchors , num_sample = 3):
+    def filter_sample(self, x, eps, anchors , num_sample):
         B = x.shape[0]
         num_classes = self.model.fc.out_features
         labels_count = torch.zeros((B,num_classes))
-        ulbs_embed = self.embedding(x)
+        if self.args.model == "vitbase_timm":
+            ulbs_embed = self.embedding(x)[:, 0, :]
+        else:
+            ulbs_embed = self.embedding(x)
+        print("Check ulbs embed shape", ulbs_embed.shape)
+        print("Check model in features", self.model.fc.in_features)
         predictions = torch.argmax(self.model(x).detach().cpu(), dim = 1)
         for i in tqdm.tqdm(range(B)):
             labels_count[i][predictions[i]] += 1
             for j in range(num_classes):
                 anchor = anchors[j]
                 label = self.pseudo_labels[j]
-                ulb_embed = ulbs_embed[i].reshape(1, 512)
+                ulb_embed = ulbs_embed[i].reshape(1, self.model.fc.in_features)
                 grad = self.compute_ulb_grads(ulb_embed, label)
                 alpha = self.calculate_optimum_alpha(eps, anchor, ulb_embed, grad)
                 feature_mix = self.mix_feature(ulb_embed, anchor, alpha)
@@ -133,30 +135,33 @@ class DeYO_Custom(nn.Module):
         if self.episodic:
             self.reset()
         
+        
         if targets is None:
             for _ in range(self.steps):
+                filter_ids_0 = torch.where((self.filter_sample(x, self.eps, self.anchors, self.num_sample)))
                 if flag:
-                    outputs, backward, final_backward = self.forward_and_adapt_deyo(x, iter_, self.model, self.args,
+                    outputs, backward, final_backward = forward_and_adapt_deyo(x, iter_, self.model, self.args,
                                                                               self.optimizer, self.deyo_margin,
-                                                                              self.margin_e0, targets, flag, group)
+                                                                              self.margin_e0, filter_ids_0, targets, flag, group)
                 else:
-                    outputs = self.forward_and_adapt_deyo(x, iter_, self.model, self.args,
+                    outputs = forward_and_adapt_deyo(x, iter_, self.model, self.args,
                                                     self.optimizer, self.deyo_margin,
-                                                    self.margin_e0, targets, flag, group)
+                                                    self.margin_e0, filter_ids_0,  targets, flag, group)
         else:
             for _ in range(self.steps):
+                filter_ids_0 = torch.where((self.filter_sample(x, self.eps, self.anchors, self.num_sample)))
                 if flag:
-                    outputs, backward, final_backward, corr_pl_1, corr_pl_2 = self.forward_and_adapt_deyo(x, iter_, self.model, 
+                    outputs, backward, final_backward, corr_pl_1, corr_pl_2 = forward_and_adapt_deyo(x, iter_, self.model, 
                                                                                                     self.args, 
                                                                                                     self.optimizer, 
                                                                                                     self.deyo_margin,
-                                                                                                    self.margin_e0,
+                                                                                                    self.margin_e0, filter_ids_0,
                                                                                                     targets, flag, group)
                 else:
-                    outputs = self.forward_and_adapt_deyo(x, iter_, self.model, 
+                    outputs = forward_and_adapt_deyo(x, iter_, self.model, 
                                                     self.args, self.optimizer, 
                                                     self.deyo_margin,
-                                                    self.margin_e0,
+                                                    self.margin_e0, filter_ids_0,
                                                     targets, flag, group, self)
         if targets is None:
             if flag:
@@ -176,121 +181,127 @@ class DeYO_Custom(nn.Module):
                                  self.model_state, self.optimizer_state)
         self.ema = None
 
-    @torch.enable_grad()  # ensure grads in possible no grad context for testing
-    def forward_and_adapt_deyo(self, 
-                                x, 
-                                iter_, 
-                                model, 
-                                args, 
-                                optimizer, 
-                                deyo_margin, 
-                                margin, 
-                                targets=None, 
-                                flag=True, 
-                                group=None):
-        """Forward and adapt model input data.
-        Measure entropy of the model prediction, take gradients, and update params.
-        """
-        outputs = model(x)
-        if not flag:
-            return outputs
-        
-        optimizer.zero_grad()
-        entropys = softmax_entropy(outputs)
-        filter_ids_0 = torch.where((self.filter_sample(x, self.eps, self.anchors, self.num_sample)))
-        entropys = entropys[filter_ids_0]
-        backward = len(entropys)
-        if backward == 0:
-            if targets is not None:
-                return outputs, 0, 0 , 0 ,0
-            return outputs, 0, 0
-        
-        print("Running done filter 0")
-        if args.filter_ent:
-            filter_ids_1 = torch.where((entropys < deyo_margin))
-        else:    
-            filter_ids_1 = torch.where((entropys <= math.log(1000)))
-        
-        entropys = entropys[filter_ids_1]
-        backward = len(entropys)
-        if backward==0:
-            if targets is not None:
-                return outputs, 0, 0, 0, 0
-            return outputs, 0, 0
-
-        x_prime = x[filter_ids_1]
-        x_prime = x_prime.detach()
-        if args.aug_type=='occ':
-            first_mean = x_prime.view(x_prime.shape[0], x_prime.shape[1], -1).mean(dim=2)
-            final_mean = first_mean.unsqueeze(-1).unsqueeze(-1)
-            occlusion_window = final_mean.expand(-1, -1, args.occlusion_size, args.occlusion_size)
-            x_prime[:, :, args.row_start:args.row_start+args.occlusion_size,args.column_start:args.column_start+args.occlusion_size] = occlusion_window
-        elif args.aug_type=='patch':
-            resize_t = torchvision.transforms.Resize(((x.shape[-1]//args.patch_len)*args.patch_len,(x.shape[-1]//args.patch_len)*args.patch_len))
-            resize_o = torchvision.transforms.Resize((x.shape[-1],x.shape[-1]))
-            x_prime = resize_t(x_prime)
-            x_prime = rearrange(x_prime, 'b c (ps1 h) (ps2 w) -> b (ps1 ps2) c h w', ps1=args.patch_len, ps2=args.patch_len)
-            perm_idx = torch.argsort(torch.rand(x_prime.shape[0],x_prime.shape[1]), dim=-1)
-            x_prime = x_prime[torch.arange(x_prime.shape[0]).unsqueeze(-1),perm_idx]
-            x_prime = rearrange(x_prime, 'b (ps1 ps2) c h w -> b c (ps1 h) (ps2 w)', ps1=args.patch_len, ps2=args.patch_len)
-            x_prime = resize_o(x_prime)
-        elif args.aug_type=='pixel':
-            x_prime = rearrange(x_prime, 'b c h w -> b c (h w)')
-            x_prime = x_prime[:,:,torch.randperm(x_prime.shape[-1])]
-            x_prime = rearrange(x_prime, 'b c (ps1 ps2) -> b c ps1 ps2', ps1=x.shape[-1], ps2=x.shape[-1])
-        with torch.no_grad():
-            outputs_prime = model(x_prime)
-        
-        prob_outputs = outputs[filter_ids_1].softmax(1)
-        prob_outputs_prime = outputs_prime.softmax(1)
-
-        cls1 = prob_outputs.argmax(dim=1)
-
-        plpd = torch.gather(prob_outputs, dim=1, index=cls1.reshape(-1,1)) - torch.gather(prob_outputs_prime, dim=1, index=cls1.reshape(-1,1))
-        plpd = plpd.reshape(-1)
-        
-        if args.filter_plpd:
-            filter_ids_2 = torch.where(plpd > args.plpd_threshold)
-        else:
-            filter_ids_2 = torch.where(plpd >= -2.0)
-        entropys = entropys[filter_ids_2]
-        final_backward = len(entropys)
-        
+@torch.enable_grad()  # ensure grads in possible no grad context for testing
+def forward_and_adapt_deyo( x, 
+                            iter_, 
+                            model, 
+                            args, 
+                            optimizer, 
+                            deyo_margin, 
+                            margin, 
+                            filter_ids_0,
+                            targets=None, 
+                            flag=True, 
+                            group=None):
+    """Forward and adapt model input data.
+    Measure entropy of the model prediction, take gradients, and update params.
+    """
+    outputs = model(x)
+    if not flag:
+        return outputs
+    
+    optimizer.zero_grad()
+    entropys = softmax_entropy(outputs)
+    # filter_ids_0 = torch.where((self.filter_sample(x, self.eps, self.anchors, self.num_sample)))
+    entropys = entropys[filter_ids_0]
+    
+    backward = len(entropys)
+    print(backward)
+    if backward == 0:
         if targets is not None:
-            corr_pl_1 = (targets[filter_ids_1] == prob_outputs.argmax(dim=1)).sum().item()
-            
-        if final_backward==0:
-            del x_prime
-            del plpd
-            
-            if targets is not None:
-                return outputs, backward, 0, corr_pl_1, 0
-            return outputs, backward, 0
-            
-        plpd = plpd[filter_ids_2]
+            return outputs, 0, 0 , 0 ,0
+        return outputs, 0, 0
         
+    # print("Done running filter 0")
+        
+    if args.filter_ent:
+        filter_ids_1 = torch.where((entropys < deyo_margin))
+    else:    
+        filter_ids_1 = torch.where((entropys <= math.log(1000)))
+        
+    entropys = entropys[filter_ids_1]
+    backward = len(entropys)
+    if backward==0:
+        # print("Stop here")
         if targets is not None:
-            corr_pl_2 = (targets[filter_ids_1][filter_ids_2] == prob_outputs[filter_ids_2].argmax(dim=1)).sum().item()
+            return outputs, 0, 0, 0, 0
+        return outputs, 0, 0
+    # print("Done running filter 1")
+    x_prime = x[filter_ids_0][filter_ids_1]
+    x_prime = x_prime.detach()
+    # print(x_prime.shape)
+    if args.aug_type=='occ':
+        first_mean = x_prime.view(x_prime.shape[0], x_prime.shape[1], -1).mean(dim=2)
+        final_mean = first_mean.unsqueeze(-1).unsqueeze(-1)
+        occlusion_window = final_mean.expand(-1, -1, args.occlusion_size, args.occlusion_size)
+        x_prime[:, :, args.row_start:args.row_start+args.occlusion_size,args.column_start:args.column_start+args.occlusion_size] = occlusion_window
+    elif args.aug_type=='patch':
+        resize_t = torchvision.transforms.Resize(((x.shape[-1]//args.patch_len)*args.patch_len,(x.shape[-1]//args.patch_len)*args.patch_len))
+        resize_o = torchvision.transforms.Resize((x.shape[-1],x.shape[-1]))
+        x_prime = resize_t(x_prime)
+        x_prime = rearrange(x_prime, 'b c (ps1 h) (ps2 w) -> b (ps1 ps2) c h w', ps1=args.patch_len, ps2=args.patch_len)
+        perm_idx = torch.argsort(torch.rand(x_prime.shape[0],x_prime.shape[1]), dim=-1)
+        x_prime = x_prime[torch.arange(x_prime.shape[0]).unsqueeze(-1),perm_idx]
+        x_prime = rearrange(x_prime, 'b (ps1 ps2) c h w -> b c (ps1 h) (ps2 w)', ps1=args.patch_len, ps2=args.patch_len)
+        x_prime = resize_o(x_prime)
+    elif args.aug_type=='pixel':
+        x_prime = rearrange(x_prime, 'b c h w -> b c (h w)')
+        x_prime = x_prime[:,:,torch.randperm(x_prime.shape[-1])]
+        x_prime = rearrange(x_prime, 'b c (ps1 ps2) -> b c ps1 ps2', ps1=x.shape[-1], ps2=x.shape[-1])
+        
+    with torch.no_grad():
+        outputs_prime = model(x_prime)
+    
+    prob_outputs = outputs[filter_ids_0][filter_ids_1].softmax(1)
+    prob_outputs_prime = outputs_prime.softmax(1)
 
-        if args.reweight_ent or args.reweight_plpd:
-            coeff = (args.reweight_ent * (1 / (torch.exp(((entropys.clone().detach()) - margin)))) +
-                    args.reweight_plpd * (1 / (torch.exp(-1. * plpd.clone().detach())))
-                    )            
-            entropys = entropys.mul(coeff)
-        loss = entropys.mean(0)
+    cls1 = prob_outputs.argmax(dim=1)
 
-        if final_backward != 0:
-            loss.backward()
-            optimizer.step()
-        optimizer.zero_grad()
-
+    plpd = torch.gather(prob_outputs, dim=1, index=cls1.reshape(-1,1)) - torch.gather(prob_outputs_prime, dim=1, index=cls1.reshape(-1,1))
+    plpd = plpd.reshape(-1)
+        
+    if args.filter_plpd:
+        filter_ids_2 = torch.where(plpd > args.plpd_threshold)
+    else:
+        filter_ids_2 = torch.where(plpd >= -2.0)
+    entropys = entropys[filter_ids_2]
+    final_backward = len(entropys)
+        
+    if targets is not None:
+        corr_pl_1 = (targets[filter_ids_1] == prob_outputs.argmax(dim=1)).sum().item()
+            
+    if final_backward==0:
         del x_prime
         del plpd
-        
+            
         if targets is not None:
-            return outputs, backward, final_backward, corr_pl_1, corr_pl_2
-        # print("Running")
-        return outputs, backward, final_backward
+            return outputs, backward, 0, corr_pl_1, 0
+        return outputs, backward, 0
+    # print("Done running filter 2")
+    plpd = plpd[filter_ids_2]
+        
+    if targets is not None:
+        corr_pl_2 = (targets[filter_ids_1][filter_ids_2] == prob_outputs[filter_ids_2].argmax(dim=1)).sum().item()
+
+    if args.reweight_ent or args.reweight_plpd:
+        coeff = (args.reweight_ent * (1 / (torch.exp(((entropys.clone().detach()) - margin)))) +
+                args.reweight_plpd * (1 / (torch.exp(-1. * plpd.clone().detach())))
+                )            
+        entropys = entropys.mul(coeff)
+    loss = entropys.mean(0)
+
+    if final_backward != 0:
+        loss.backward()
+        optimizer.step()
+    optimizer.zero_grad()
+
+    del x_prime
+    del plpd
+        
+    if targets is not None:
+        return outputs, backward, final_backward, corr_pl_1, corr_pl_2
+    # print("Running")
+    return outputs, backward, final_backward
 
 @torch.jit.script
 def softmax_entropy(x: torch.Tensor) -> torch.Tensor:

@@ -6,9 +6,12 @@ from logging import debug
 import os
 import time
 import math
+# import tq
+from tqdm import tqdm
 from config import get_args
 
 args = get_args()
+#Check dataset
 if args.dset == 'ImageNet-C':
     args.data = os.path.join(args.data_root, 'ImageNet')
     args.data_corruption = os.path.join(args.data_root, args.dset)
@@ -19,15 +22,19 @@ elif args.dset == 'Waterbirds':
             h5py_file = file
             break
     args.data_corruption_file = os.path.join(args.data_root, args.dset, h5py_file)
+    
 elif args.dset == 'ColoredMNIST':
     args.data_corruption = os.path.join(args.data_root, args.dset)
-elif args.dset == 'CIFAR10-C':  # Added handling for CIFAR10-C
+    
+elif args.dset == 'Cifar10-C':  # Added handling for CIFAR10-C
     args.data_corruption = os.path.join(args.data_root, 'CIFAR-10-C')
-    if not hasattr(args, 'corruption_type') or not hasattr(args, 'severity'):
+    if not hasattr(args, 'corruption') or not hasattr(args, 'level'):
         raise ValueError("CIFAR10-C requires 'corruption_type' and 'severity' to be specified.")
+else:
+    raise ValueError("Wrong dataset")
 
 biased = (args.exp_type == 'spurious')
-
+# print(biased)
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
@@ -64,47 +71,6 @@ def validate(val_loader, model, criterion, args, mode='eval'):
         len(val_loader),
         [batch_time, top1, top5],
         prefix='Test: ')
-    
-    if args.dset == 'CIFAR10-C':  # Handling for CIFAR10-C
-        model.eval()
-        with torch.no_grad():
-            end = time.time()
-            for i, dl in enumerate(val_loader):
-                images, target = dl[0], dl[1]
-                if args.gpu is not None:
-                    images = images.cuda()
-                if torch.cuda.is_available():
-                    target = target.cuda()
-                
-                # Compute output
-                output = model(images)
-                
-                # Measure accuracy and record loss
-                acc1, acc5 = accuracy(output, target, topk=(1, 5))
-                top1.update(acc1[0], images.size(0))
-                top5.update(acc5[0], images.size(0))
-
-                # Measure elapsed time
-                batch_time.update(time.time() - end)
-                end = time.time()
-
-                if (i + 1) % args.wandb_interval == 0:
-                    if args.wandb_log:
-                        wandb.log({f'{args.corruption}/top1': top1.avg,
-                                   f'{args.corruption}/top5': top5.avg})
-                    
-                    progress.display(i)
-
-        logger.info(f"Result under {args.corruption}. The adaptation accuracy of {args.method} is top1: {top1.avg:.5f} and top5: {top5.avg:.5f}")
-
-        acc1s.append(top1.avg.item())
-        acc5s.append(top5.avg.item())
-
-        logger.info(f"acc1s are {acc1s}")
-        logger.info(f"acc5s are {acc5s}")
-        return top1.avg, top5.avg
-
-    # Existing validation logic for other datasets
     if biased:
         LL_AM = AverageMeter('LL Acc', ':6.2f')
         LS_AM = AverageMeter('LS Acc', ':6.2f')
@@ -121,43 +87,45 @@ def validate(val_loader, model, criterion, args, mode='eval'):
         end = time.time()
         correct_count = [0,0,0,0]
         total_count = [1e-6,1e-6,1e-6,1e-6]
-        for i, dl in enumerate(val_loader):
+        for i, dl in enumerate(tqdm(val_loader)):
             images, target = dl[0], dl[1]
             if args.gpu is not None:
                 images = images.cuda()
             if torch.cuda.is_available():
                 target = target.cuda()
             if biased:
-                if args.dset == 'Waterbirds':
+                if args.dset=='Waterbirds':
                     place = dl[2]['place'].cuda()
                 else:
                     place = dl[2].cuda()
-                group = 2 * target + place  # 0: landbird+land, 1: landbird+sea, 2: seabird+land, 3: seabird+sea
+                group = 2*target + place #0: landbird+land, 1: landbird+sea, 2: seabird+land, 3: seabird+sea
                 
-            # Compute output
-            if args.method == 'deyo':
+            # compute output
+            if args.method=='deyo':
                 output = adapt_model(images, i, target, flag=False, group=group)
             else:
                 output = model(images)
-            # Measure accuracy and record loss
+            # measure accuracy and record loss
             if biased:
                 TFtensor = (output.argmax(dim=1) == target)
                 for group_idx in range(4):
-                    correct_count[group_idx] += TFtensor[group == group_idx].sum().item()
-                    total_count[group_idx] += len(TFtensor[group == group_idx])
+                    correct_count[group_idx] += TFtensor[group==group_idx].sum().item()
+                    total_count[group_idx] += len(TFtensor[group==group_idx])
                 acc1, acc5 = accuracy(output, target, topk=(1, 1))
             else:
                 acc1, acc5 = accuracy(output, target, topk=(1, 5))
 
             top1.update(acc1[0], images.size(0))
             top5.update(acc5[0], images.size(0))
+                
 
-            if (i + 1) % args.wandb_interval == 0:
+            # '''
+            if (i+1) % args.wandb_interval == 0:
                 if biased:
-                    LL = correct_count[0] / total_count[0] * 100
-                    LS = correct_count[1] / total_count[1] * 100
-                    SL = correct_count[2] / total_count[2] * 100
-                    SS = correct_count[3] / total_count[3] * 100
+                    LL = correct_count[0]/total_count[0]*100
+                    LS = correct_count[1]/total_count[1]*100
+                    SL = correct_count[2]/total_count[2]*100
+                    SS = correct_count[3]/total_count[3]*100
                     LL_AM.update(LL, images.size(0))
                     LS_AM.update(LS, images.size(0))
                     SL_AM.update(SL, images.size(0))
@@ -173,10 +141,17 @@ def validate(val_loader, model, criterion, args, mode='eval'):
                                f'{args.corruption}/top5': top5.avg})
                 
                 progress.display(i)
-
-            # Measure elapsed time
+            # '''
+            
+            # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
+            '''
+            if (i+1) % args.print_freq == 0:
+                progress.display(i)
+            if i > 10 and args.debug:
+                break
+            '''
             
     if biased:
         logger.info(f"- Detailed result under {args.corruption}. LL: {LL:.5f}, LS: {LS:.5f}, SL: {SL:.5f}, SS: {SS:.5f}")
@@ -185,11 +160,11 @@ def validate(val_loader, model, criterion, args, mode='eval'):
                        'final_avg/LS': LS,
                        'final_avg/SL': SL,
                        'final_avg/SS': SS,
-                       'final_avg/AVG': (LL + LS + SL + SS) / 4,
-                       'final_avg/WORST': min(LL, LS, SL, SS)
+                       'final_avg/AVG': (LL+LS+SL+SS)/4,
+                       'final_avg/WORST': min(LL,LS,SL,SS)
                       })
             
-        avg = (LL + LS + SL + SS) / 4
+        avg = (LL+LS+SL+SS)/4
         logger.info(f"Result under {args.corruption}. The adaptation accuracy of {args.method} is  average: {avg:.5f}")
 
         LLs.append(LL)
@@ -197,7 +172,7 @@ def validate(val_loader, model, criterion, args, mode='eval'):
         SLs.append(SL)
         SSs.append(SS)
         acc1s.append(avg)
-        acc5s.append(min(LL, LS, SL, SS))
+        acc5s.append(min(LL,LS,SL,SS))
 
         logger.info(f"The LL accuracy are {LLs}")
         logger.info(f"The LS accuracy are {LSs}")
@@ -216,7 +191,8 @@ def validate(val_loader, model, criterion, args, mode='eval'):
     return top1.avg, top5.avg
 
 if __name__ == '__main__':    
-    
+# def main(args):
+    # print(args.dset)
     if args.dset == 'ImageNet-C':
         args.num_class = 1000
     elif args.dset == 'Waterbirds' or args.dset == 'ColoredMNIST':
@@ -245,6 +221,7 @@ if __name__ == '__main__':
     
     total_top1 = AverageMeter('Acc@1', ':6.2f')
     total_top5 = AverageMeter('Acc@5', ':6.2f')
+    
     # Set random seeds
     if args.seed is not None:
         random.seed(args.seed)
@@ -255,18 +232,38 @@ if __name__ == '__main__':
         os.makedirs(args.output, exist_ok=True)
 
     args.logger_name = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + "-{}-{}-level{}-seed{}".format(args.method, args.model, args.level, args.seed) 
+    # Add name for deyoWFM method
     if args.method == "deyo_new":
-        args.logger_name += "-{}".format(args.num_sim)
+        args.logger_name += "-{}-{}".format(args.num_sim, args.alpha_cap)
     args.logger_name += ".txt"
+    
     logger = get_logger(name="project", output_directory=args.output, log_name=args.logger_name, debug=False) 
     
-    common_corruptions = ['gaussian_noise', 'shot_noise', 'impulse_noise', 'defocus_blur', 'glass_blur', 'motion_blur', 'zoom_blur', 'snow', 'frost', 'fog', 'brightness', 'contrast', 'elastic_transform', 'pixelate', 'jpeg_compression']
+    common_corruptions = [
+                            'gaussian_noise',
+                            'shot_noise',
+                            'impulse_noise',
+                            'defocus_blur', 
+                            'glass_blur', 
+                            'motion_blur', 
+                            'zoom_blur', 
+                            'snow', 
+                            'frost', 
+                            'fog', 
+                            'brightness', 
+                            'contrast', 
+                            'elastic_transform', 
+                            'pixelate', 
+                            'jpeg_compression'
+                            ]
+    
     
     if biased:
         common_corruptions = ['spurious correlation']
 
     if args.exp_type == 'mix_shifts' and args.dset == 'ImageNet-C':
         datasets = []
+        # corruptions
         for cpt in common_corruptions:
             args.corruption = cpt
             logger.info(args.corruption)
@@ -376,14 +373,12 @@ if __name__ == '__main__':
                     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.test_batch_size, 
                                                              shuffle=args.if_shuffle, **kwargs)
                 elif args.dset == 'Cifar10-C':  # Handling for CIFAR10-C
+                    import torchvision.transforms as transforms
                     kwargs = {'num_workers': args.workers, 'pin_memory': True}
                     val_dataset = CIFAR10C(root="/mnt/disk1/nam2/FedDG/DSU/multi-domain-generalization/DATA/cifar10_c/", 
                                            corruption_type=args.corruption, 
                                            severity=args.level,
-                                           transform=transforms.Compose([
-                                               transforms.ToTensor(),
-                                               transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))
-                                           ]))
+                                           transform=transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))]))
                     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.test_batch_size,
                                                              shuffle=args.if_shuffle, **kwargs)
         else:
@@ -393,13 +388,15 @@ if __name__ == '__main__':
         if args.method in ['tent', 'eata', 'sar', 'deyo', 'no_adapt', "deyo_new"]:
             if args.model == "resnet50_gn_timm":
                 net = timm.create_model('resnet50_gn', pretrained=True)
+                setattr(net, 'fc', net.head)
                 args.lr = (0.00025 / 64) * bs * 2 if bs < 32 else 0.00025
             elif args.model == "vitbase_timm":
                 net = timm.create_model('vit_base_patch16_224', pretrained=True)
+                setattr(net, 'fc', net.head)
                 args.lr = (0.001 / 64) * bs
             elif args.model == "resnet50_bn_torch":
                 if args.dset == 'Waterbirds':
-                    with open(os.path.join(args.data_corruption, args.wbmodel_name), 'rb') as f:
+                    with open(os.path.join(args.pretrained_path), 'rb') as f:
                         net = pickle.load(f)
                 elif args.dset == 'ImageNet-C':
                     net = Resnet.__dict__['resnet50'](pretrained=True)
@@ -449,7 +446,7 @@ if __name__ == '__main__':
             if args.eata_fishers:
                 print('EATA!')
                 # Compute fisher informatrix
-                args.corruption = 'original'
+                # args.corruption = 'original'
 
                 if args.dset == 'Waterbirds':
                     fisher_dataset = WaterbirdsDataset(file=args.data_corruption_file, split='train', transform=transform)
@@ -464,6 +461,15 @@ if __name__ == '__main__':
                                                   ]))
                     fisher_loader = torch.utils.data.DataLoader(fisher_dataset, batch_size=args.test_batch_size,
                                                                 shuffle=args.if_shuffle, **kwargs)
+                elif args.dset == "Cifar10-C":
+                    import torchvision.transforms as transforms
+                    kwargs = {'num_workers': args.workers, 'pin_memory': True}
+                    fisher_dataset = CIFAR10C(root="/mnt/disk1/nam2/FedDG/DSU/multi-domain-generalization/DATA/cifar10_c/", 
+                                           corruption_type=args.corruption, 
+                                           severity=args.level,
+                                           transform=transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))]))
+                    fisher_loader = torch.utils.data.DataLoader(fisher_dataset, batch_size=args.test_batch_size,
+                                                             shuffle=args.if_shuffle, **kwargs)
                 else:
                     fisher_dataset, fisher_loader = prepare_test_data(args)
                 fisher_dataset.set_dataset_size(args.fisher_size)
@@ -591,7 +597,6 @@ if __name__ == '__main__':
 
                 if (i + 1) % args.wandb_interval == 0:
                     progress.display(i)
-
             acc1 = top1.avg
             acc5 = top5.avg
             
@@ -602,11 +607,11 @@ if __name__ == '__main__':
                                'final_avg/LS': LS,
                                'final_avg/SL': SL,
                                'final_avg/SS': SS,
-                               'final_avg/AVG': (LL + LS + SL + SS) / 4,
-                               'final_avg/WORST': min(LL, LS, SL, SS),
+                               'final_avg/AVG': (LL+LS+SL+SS)/4,
+                               'final_avg/WORST': min(LL,LS,SL,SS),
                               })
 
-                avg = (LL + LS + SL + SS) / 4
+                avg = (LL+LS+SL+SS)/4
                 logger.info(f"Result under {args.corruption}. The adaptation accuracy of SAR is  average: {avg:.5f}")
 
                 LLs.append(LL)
@@ -614,7 +619,7 @@ if __name__ == '__main__':
                 SLs.append(SL)
                 SSs.append(SS)
                 acc1s.append(avg)
-                acc5s.append(min(LL, LS, SL, SS))
+                acc5s.append(min(LL,LS,SL,SS))
 
                 logger.info(f"The LL accuracy are {LLs}")
                 logger.info(f"The LS accuracy are {LSs}")
@@ -630,7 +635,6 @@ if __name__ == '__main__':
 
                 logger.info(f"acc1s are {acc1s}")
                 logger.info(f"acc5s are {acc5s}")
-
         elif args.method in ['deyo']:
             net = deyo.configure_model(net)
             params, param_names = deyo.collect_params(net)
@@ -789,9 +793,9 @@ if __name__ == '__main__':
 
                 logger.info(f"acc1s are {acc1s}")
                 logger.info(f"acc5s are {acc5s}")
-        elif args.method == "deyo_new":
+        elif args.method in ['deyo_new']:
             net = deyo_new.configure_model(net)
-            params, param_names = deyo.collect_params(net)
+            params, param_names = deyo_new.collect_params(net)
             logger.info(param_names)
 
             optimizer = torch.optim.SGD(params, args.lr, momentum=0.9)
@@ -816,37 +820,37 @@ if __name__ == '__main__':
                     prefix='Test: ')
             end = time.time()
             count_backward = 1e-6
-            final_count_backward = 1e-6
+            final_count_backward =1e-6
             count_corr_pl_1 = 0
             count_corr_pl_2 = 0
             total_count_backward = 1e-6
-            total_final_count_backward = 1e-6
+            total_final_count_backward =1e-6
             total_count_corr_pl_1 = 0
             total_count_corr_pl_2 = 0
-            correct_count = [0, 0, 0, 0]
-            total_count = [1e-6, 1e-6, 1e-6, 1e-6]
-            for i, dl in enumerate(val_loader):
+            correct_count = [0,0,0,0]
+            total_count = [1e-6,1e-6,1e-6,1e-6]
+            for i, dl in enumerate(tqdm(val_loader)):
                 images, target = dl[0], dl[1]
                 if args.gpu is not None:
                     images = images.cuda()
                 if torch.cuda.is_available():
                     target = target.cuda()
                 if biased:
-                    if args.dset == 'Waterbirds':
+                    if args.dset=='Waterbirds':
                         place = dl[2]['place'].cuda()
                     else:
                         place = dl[2].cuda()
-                    group = 2 * target + place
+                    group = 2*target + place
                 else:
-                    group = None
+                    group=None
 
                 output, backward, final_backward, corr_pl_1, corr_pl_2 = adapt_model(images, i, target, group=group)
                 if biased:
-                    TFtensor = (output.argmax(dim=1) == target)
+                    TFtensor = (output.argmax(dim=1)==target)
                     
                     for group_idx in range(4):
-                        correct_count[group_idx] += TFtensor[group == group_idx].sum().item()
-                        total_count[group_idx] += len(TFtensor[group == group_idx])
+                        correct_count[group_idx] += TFtensor[group==group_idx].sum().item()
+                        total_count[group_idx] += len(TFtensor[group==group_idx])
                     acc1, acc5 = accuracy(output, target, topk=(1, 1))
                 else:
                     acc1, acc5 = accuracy(output, target, topk=(1, 5))
@@ -864,12 +868,12 @@ if __name__ == '__main__':
                 top1.update(acc1[0], images.size(0))
                 top5.update(acc5[0], images.size(0))
                 
-                if (i + 1) % args.wandb_interval == 0:
+                if (i+1) % args.wandb_interval == 0:
                     if biased:
-                        LL = correct_count[0] / total_count[0] * 100
-                        LS = correct_count[1] / total_count[1] * 100
-                        SL = correct_count[2] / total_count[2] * 100
-                        SS = correct_count[3] / total_count[3] * 100
+                        LL = correct_count[0]/total_count[0]*100
+                        LS = correct_count[1]/total_count[1]*100
+                        SL = correct_count[2]/total_count[2]*100
+                        SS = correct_count[3]/total_count[3]*100
                         LL_AM.update(LL, images.size(0))
                         LS_AM.update(LS, images.size(0))
                         SL_AM.update(SL, images.size(0))
@@ -884,20 +888,20 @@ if __name__ == '__main__':
                     if args.wandb_log:
                         wandb.log({f'{args.corruption}/top1': top1.avg,
                                     f'{args.corruption}/top5': top5.avg,
-                                    f'acc_pl_1': count_corr_pl_1 / count_backward,
-                                    f'acc_pl_2': count_corr_pl_2 / final_count_backward,
+                                    f'acc_pl_1': count_corr_pl_1/count_backward,
+                                    f'acc_pl_2': count_corr_pl_2/final_count_backward,
                                     f'count_backward': count_backward,
                                     f'final_count_backward': final_count_backward})
                     
                     count_backward = 1e-6
-                    final_count_backward = 1e-6
+                    final_count_backward =1e-6
                     count_corr_pl_1 = 0
                     count_corr_pl_2 = 0
 
                 batch_time.update(time.time() - end)
                 end = time.time()
 
-                if (i + 1) % args.wandb_interval == 0:
+                if (i+1) % args.wandb_interval == 0:
                     progress.display(i)
 
             acc1 = top1.avg
@@ -910,20 +914,20 @@ if __name__ == '__main__':
                                'final_avg/LS': LS,
                                'final_avg/SL': SL,
                                'final_avg/SS': SS,
-                               'final_avg/AVG': (LL + LS + SL + SS) / 4,
-                               'final_avg/WORST': min(LL, LS, SL, SS),
+                               'final_avg/AVG': (LL+LS+SL+SS)/4,
+                               'final_avg/WORST': min(LL,LS,SL,SS),
                               })
                 
             if args.wandb_log:
                 wandb.log({f'{args.corruption}/top1': acc1,
                             f'{args.corruption}/top5': acc5,
-                            f'total_acc_pl_1': total_count_corr_pl_1 / total_count_backward,
-                            f'total_acc_pl_2': total_count_corr_pl_2 / total_final_count_backward,
+                            f'total_acc_pl_1': total_count_corr_pl_1/total_count_backward,
+                            f'total_acc_pl_2': total_count_corr_pl_2/total_final_count_backward,
                             f'total_count_backward': total_count_backward,
                             f'total_final_count_backward': total_final_count_backward})
 
             if biased:
-                avg = (LL + LS + SL + SS) / 4
+                avg = (LL+LS+SL+SS)/4
                 logger.info(f"Result under {args.corruption}. The adaptation accuracy of DeYO is  average: {avg:.5f}")
 
                 LLs.append(LL)
@@ -931,7 +935,7 @@ if __name__ == '__main__':
                 SLs.append(SL)
                 SSs.append(SS)
                 acc1s.append(avg)
-                acc5s.append(min(LL, LS, SL, SS))
+                acc5s.append(min(LL,LS,SL,SS))
 
                 logger.info(f"The LL accuracy are {LLs}")
                 logger.info(f"The LS accuracy are {LSs}")
@@ -961,3 +965,6 @@ if __name__ == '__main__':
                        'final_avg/top5': total_top5.avg})
 
             wandb.finish()
+
+# if __name__ == '__main__': 
+    # main(args)

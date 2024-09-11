@@ -16,7 +16,15 @@ __pycache__/
 *.JPEG
 *.png
 # directory
-output/
 wandb/
 .idea/
 .ipynb_checkpoints/
+
+data/
+
+output_check/
+output_cifar/
+output_mnist/
+output_waterbirds/
+pretrained/
+

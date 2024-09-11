@@ -8,7 +8,8 @@ import numpy as np
 import pickle
 import torchvision
 from torchvision import datasets, transforms
-
+from models.resnet import resnet
+from tqdm import tqdm
 # Set up argument parser
 parser = argparse.ArgumentParser(description='CIFAR-10 Training and Evaluation')
 parser.add_argument('--root_dir', default='/mnt/disk1/ducntm/DATA', help='path to data')
@@ -19,7 +20,7 @@ parser.add_argument('--batch_size', default=64, type=int, help='batch_size for t
 parser.add_argument('--test_batch_size', default=1000, type=int, help='batch_size for test.')
 parser.add_argument('--workers', default=2, type=int, help='num_workers for train loader.')
 parser.add_argument('--if_shuffle', default=1, type=int, help='shuffle for training.')
-parser.add_argument('--max_epochs', default=20, type=int, help='epochs for training.')
+parser.add_argument('--max_epochs', default=100, type=int, help='epochs for training.')
 parser.add_argument('--interval', default=10, type=int, help='intervals for saving.')
 args = parser.parse_args()
 
@@ -50,13 +51,14 @@ test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.test_bat
 
 # Function to test the model
 def test_model(model, device, test_loader, set_name="test set"):
+    print("Eval model")
     model.eval()
     CELoss = torch.nn.CrossEntropyLoss()
     test_loss = 0
     correct_count = torch.tensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     total_count = torch.tensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     with torch.no_grad():
-        for data, target in test_loader:
+        for data, target in tqdm(test_loader):
             data, target = data.to(device), target.to(device)
             output = model(data)
             test_loss += CELoss(output, target).sum().item()  # sum up batch loss
@@ -76,9 +78,10 @@ def test_model(model, device, test_loader, set_name="test set"):
 
 # Function to train the model
 def erm_train(model, device, train_loader, optimizer, epoch, args):
+    print("Train model")
     model.train()
     CELoss = torch.nn.CrossEntropyLoss()
-    for batch_idx, (data, target) in enumerate(train_loader):
+    for batch_idx, (data, target) in enumerate(tqdm(train_loader)):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
@@ -102,8 +105,8 @@ def train_and_test_erm(model, args):
             test_model(model, device, test_loader)
 
     # Save the trained model
-    if not os.path.exists(os.path.join("/mnt/disk1/ducntm/DeYO/pretrained", 'CIFAR10_model.pickle')):
-        with open(os.path.join("/mnt/disk1/ducntm/DeYO/pretrained", 'CIFAR10_model.pickle'), 'wb') as f:
+    if not os.path.exists(os.path.join("/mnt/disk1/ducntm/DeYO/pretrained", 'CIFAR10_model_update.pickle')):
+        with open(os.path.join("/mnt/disk1/ducntm/DeYO/pretrained", 'CIFAR10_model_update.pickle'), 'wb') as f:
             pickle.dump(model, f)
     else:
         print('Pretrained model already exists.')

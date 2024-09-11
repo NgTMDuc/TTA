@@ -4,15 +4,15 @@ import math
 def get_args():
     parser = argparse.ArgumentParser(description='DeYO exps')
 
-    parser.add_argument('--data_root', default='./data/', help='root for all dataset')
-    parser.add_argument('--dset', default='Cifar10-C', type=str, help='ImageNet-C, Waterbirds, ColoredMNIST, Cifar10-C')
+    parser.add_argument('--data_root', default='/mnt/disk1/ducntm/DATA/', help='root for all dataset')
+    parser.add_argument('--dset', default='ImageNet-C', type=str, help='ImageNet-C, Waterbirds, ColoredMNIST, Cifar10-C')
     parser.add_argument('--output', default='./output/dir', help='the output directory of this experiment')
     parser.add_argument('--wandb_interval', default=100, type=int,
                         help='print outputs to wandb at given interval.')
     parser.add_argument('--wandb_log', default=0, type=int)
 
     parser.add_argument('--seed', default=2024, type=int, help='seed for initializing training. ')
-    parser.add_argument('--gpu', default='1', type=str, help='GPU id to use.')
+    parser.add_argument('--gpu', default='0', type=str, help='GPU id to use.')
     parser.add_argument('--debug', default=False, type=bool, help='debug or not.')
     parser.add_argument('--continual', default=False, type=bool, help='continual tta or fully tta')
 
@@ -22,7 +22,7 @@ def get_args():
     parser.add_argument('--if_shuffle', default=True, type=bool, help='if shuffle the test set.')
 
     # corruption settings
-    parser.add_argument('--level', default=5, type=int, help='corruption level of test(val) set.')
+    parser.add_argument('--level', default=1, type=int, help='corruption level of test(val) set.')
     parser.add_argument('--corruption', default='gaussian_noise', type=str, help='corruption type of test(val) set.')
 
     # eata settings
@@ -33,12 +33,12 @@ def get_args():
     parser.add_argument('--d_margin', type=float, default=0.05, help='\epsilon for filtering redundant samples')
 
     # Exp Settings
-    parser.add_argument('--method', default='deyo_new', type=str, help='no_adapt, tent, sar, deyo, eata, deyo_new')
-    parser.add_argument('--model', default='resnet18_bn', type=str, help='resnet50_gn_timm or resnet50_bn_torch or vitbase_timm or resnet18_bn')
+    parser.add_argument('--method', default='no_adapt', type=str, help='no_adapt, tent, sar, deyo, eata, deyo_new')
+    parser.add_argument('--model', default='vitbase_timm', type=str, help='resnet50_gn_timm or resnet50_bn_torch or vitbase_timm or resnet18_bn')
     parser.add_argument('--exp_type', default='normal', type=str, help='normal, mix_shifts, bs1, label_shifts, spurious')
     parser.add_argument('--patch_len', default=4, type=int, help='The number of patches per row/column')
-    parser.add_argument('--pretrained_path', default = "/mnt/disk1/ducntm/DeYO/pretrained/CIFAR10_model.pickle", type = str, help = "Path to pretraied model")
-
+    parser.add_argument('--pretrained_path', default = "/mnt/disk1/ducntm/DeYO/pretrained/CIFAR10_model_update.pickle", type = str, help = "Path to pretraied model")
+    parser.add_argument('--pretrained_folder', default = "/mnt/disk1/ducntm/DeYO/pretrained", type = str)
     # SAR parameters
     parser.add_argument('--sar_margin_e0', default=0.4, type=float, help='the threshold for reliable minimization in SAR.')
     parser.add_argument('--imbalance_ratio', default=500000, type=float, help='imbalance ratio for label shift exps, selected from [1, 1000, 2000, 3000, 4000, 5000, 500000], 1  denotes totally uniform and 500000 denotes (almost the same to Pure Class Order).')
@@ -66,6 +66,6 @@ def get_args():
     parser.add_argument('--wbmodel_name', default='waterbirds_pretrained_model.pickle', type=str, help='Waterbirds pre-trained model path')
     parser.add_argument('--cmmodel_name', default='ColoredMNIST_model.pickle', type=str, help='ColoredMNIST pre-trained model path')
     parser.add_argument('--lr_mul', default=1, type=float, help='5 for Waterbirds, ColoredMNIST')
-    parser.add_argument('--num_sim', default = 6, type = float, help = "Number of similar sample for DeYO method")
-    parser.add_argument('--alpha_cap', type=float, default=0.03125)
+    parser.add_argument('--num_sim', default = 11, type = float, help = "Number of similar sample for FeatMix method")
+    parser.add_argument('--alpha_cap', type=float, default=0.6)
     return parser.parse_args()
