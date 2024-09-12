@@ -19,4 +19,4 @@ all_files = ["blur.tar", "digital.tar", "extra.tar", "noise.tar", "weather.tar"]
 if __name__ == "__main__":
     for file in all_files:
         path = os.path.join(root_data, file)
-        extract_tar_file(tar_fipathle_path, destination_directory)
+        extract_tar_file(path, destination_directory)
