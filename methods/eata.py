@@ -7,12 +7,17 @@ import torch.jit
 
 import math
 import torch.nn.functional as F
+<<<<<<< HEAD
 
+=======
+from methods.new_criteria import Update_method
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
 
 class EATA(nn.Module):
     """EATA adapts a model by entropy minimization during testing.
     Once EATAed, a model adapts itself by updating on every forward.
     """
+<<<<<<< HEAD
     def __init__(self, 
                  args, 
                  model, 
@@ -25,6 +30,14 @@ class EATA(nn.Module):
                  d_margin=0.05):
         super().__init__()
         self.model = model
+=======
+    def __init__(self, args, model, optimizer, fishers=None,
+                 fisher_alpha=2000.0, steps=1, episodic=False,
+                 e_margin=math.log(1000)/2-1, d_margin=0.05):
+        super().__init__()
+        self.model = model
+        # print(model.requires_grad)
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
         self.optimizer = optimizer
         self.steps = steps
         assert steps > 0, "EATA requires >= 1 step(s) to forward and update"
@@ -45,12 +58,33 @@ class EATA(nn.Module):
         self.model_state, self.optimizer_state = \
             copy_model_and_optimizer(self.model, self.optimizer)
 
+<<<<<<< HEAD
     def forward(self, x):
+=======
+        self.update_method = Update_method(model, args)
+        # self.filter_ids_0 = None
+        self.args = args
+        
+        # for name, param in self.model.named_parameters():
+            # print(f"{name}: requires_grad={param.requires_grad}")
+        # self.anchors, self.pseudo_labels = self.update_method.generate_anchor()
+    def forward(self, x):
+        # print("Check shape of input at line 46 new_criteria.py ", x.shape)
+        if self.args.new_criteria:
+            # print(1)
+            filter_ids_0 = self.update_method.filter_sample(x, self.args.alpha_cap, self.update_method.anchors, self.update_method.num_sample)
+        else:
+            filter_ids_0 = None
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
         if self.episodic:
             self.reset()
         if self.steps > 0:
             for _ in range(self.steps):
+<<<<<<< HEAD
                 outputs, num_counts_2, num_counts_1, updated_probs = forward_and_adapt_eata(x, self.model, self.optimizer, self.fishers, self.e_margin, self.current_model_probs, fisher_alpha=self.fisher_alpha, num_samples_update=self.num_samples_update_2, d_margin=self.d_margin)
+=======
+                outputs, num_counts_2, num_counts_1, updated_probs = forward_and_adapt_eata(x, self.model, self.optimizer, self.fishers, self.e_margin, self.current_model_probs, fisher_alpha=self.fisher_alpha, num_samples_update=self.num_samples_update_2, d_margin=self.d_margin, filter_ids_0 = filter_ids_0)
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
                 self.num_samples_update_2 += num_counts_2
                 self.num_samples_update_1 += num_counts_1
                 self.reset_model_probs(updated_probs)
@@ -83,7 +117,21 @@ def softmax_entropy(x: torch.Tensor) -> torch.Tensor:
 
 
 @torch.enable_grad()  # ensure grads in possible no grad context for testing
+<<<<<<< HEAD
 def forward_and_adapt_eata(x, model, optimizer, fishers, e_margin, current_model_probs, fisher_alpha=50.0, d_margin=0.05, scale_factor=2, num_samples_update=0):
+=======
+def forward_and_adapt_eata(x, 
+                           model, 
+                           optimizer, 
+                           fishers, 
+                           e_margin, 
+                           current_model_probs, 
+                           fisher_alpha=50.0, 
+                           d_margin=0.05, 
+                           scale_factor=2, 
+                           num_samples_update=0,
+                           filter_ids_0 = None):
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
     """Forward and adapt model on batch of data.
     Measure entropy of the model prediction, take gradients, and update params.
     Return:
@@ -96,6 +144,17 @@ def forward_and_adapt_eata(x, model, optimizer, fishers, e_margin, current_model
     outputs = model(x)
     # adapt
     entropys = softmax_entropy(outputs)
+<<<<<<< HEAD
+=======
+    if filter_ids_0 is not None:
+        entropys = entropys[filter_ids_0]
+        
+        # backward = len(entropys)
+        
+        # if backward == 0:
+        #     if targets 
+    
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
     # filter unreliable samples
     filter_ids_1 = torch.where(entropys < e_margin)
     ids1 = filter_ids_1
@@ -110,7 +169,10 @@ def forward_and_adapt_eata(x, model, optimizer, fishers, e_margin, current_model
         updated_probs = update_model_probs(current_model_probs, outputs[filter_ids_1][filter_ids_2].softmax(1))
     else:
         updated_probs = update_model_probs(current_model_probs, outputs[filter_ids_1].softmax(1))
+<<<<<<< HEAD
 #     updated_probs = update_model_probs(current_model_probs, outputs[filter_ids_1].softmax(1))
+=======
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
     coeff = 1 / (torch.exp(entropys.clone().detach() - e_margin))
     #"""
     # implementation version 1, compute loss, all samples backward (some unselected are masked)
@@ -131,9 +193,12 @@ def forward_and_adapt_eata(x, model, optimizer, fishers, e_margin, current_model
     if x[ids1][ids2].size(0) != 0:
         loss.backward()
         optimizer.step()
+<<<<<<< HEAD
 #     else:
 #         print('No samples pass filter')
 #         print(len(x[ids1]), len(x[ids1][ids2]))
+=======
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
     optimizer.zero_grad()
     return outputs, entropys.size(0), filter_ids_1[0].size(0), updated_probs
 

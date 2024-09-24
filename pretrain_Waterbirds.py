@@ -1,13 +1,28 @@
+<<<<<<< HEAD
 import os
 import argparse
 parser = argparse.ArgumentParser(description='Waterbirds pretrain')
 parser.add_argument('--root_dir', default="/mnt/disk1/ducntm/DATA", help='path to data')
 parser.add_argument('--dset_dir', default="Waterbirds", help='name of dataset directory')
+=======
+# Example
+# python pretrain_Waterbirds.py --root_dir ./data --dset_dir Waterbirds
+
+import os
+import argparse
+parser = argparse.ArgumentParser(description='Waterbirds pretrain')
+parser.add_argument('--root_dir', default=None, help='path to data')
+parser.add_argument('--dset_dir', default=None, help='name of dataset directory')
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
 parser.add_argument('--gpu', default='0', type=str, help='gpu index for training.')
 parser.add_argument('--seed', default=2024, type=int, help='seed for initializing training.')
 parser.add_argument('--batch_size', default=64, type=int, help='batch_size for training.')
 parser.add_argument('--test_batch_size', default=256, type=int, help='batch_size for test.')
+<<<<<<< HEAD
 parser.add_argument('--workers', default=1, type=int, help='num_workers for train loader.')
+=======
+parser.add_argument('--workers', default=2, type=int, help='num_workers for train loader.')
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
 parser.add_argument('--if_shuffle', default=1, type=int, help='shuffle for training.')
 parser.add_argument('--max_epochs', default=200, type=int, help='epochs for training.')
 parser.add_argument('--interval', default=10, type=int, help='intervals for saving.')
@@ -105,7 +120,11 @@ def make_dataset(dset_dir):
 def eval_waterbirds(net, val_loader, epoch_cnt):
     correct_count = 0
     total_count = 0
+<<<<<<< HEAD
     for labeled_batch in tqdm(val_loader):
+=======
+    for labeled_batch in (val_loader):
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
         data = labeled_batch
         x, y = data[0], data[1]
         x = x.cuda()
@@ -122,7 +141,11 @@ def eval_waterbirds(net, val_loader, epoch_cnt):
 def test_waterbirds(net, test_loader, epoch_cnt):
     correct_count = [0,0,0,0]
     total_count = [0,0,0,0]
+<<<<<<< HEAD
     for labeled_batch in tqdm(test_loader):
+=======
+    for labeled_batch in (test_loader):
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
         data = labeled_batch
         x, y = data[0], data[1]
         place = data[2]['place']
@@ -205,11 +228,19 @@ if __name__ == '__main__':
         optimizer = torch.optim.SGD(net.parameters(), lr=0.001, momentum=0.9, weight_decay=0.0001)
         optimizer.zero_grad()
         # net.train()
+<<<<<<< HEAD
         for epochs in (range(args.max_epochs)):
             train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, 
                                                        shuffle=True, num_workers=2,
                                                        pin_memory=True)
             for _, labeled_batch in enumerate(tqdm(train_loader)):
+=======
+        for epochs in tqdm(range(args.max_epochs)):
+            train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, 
+                                                       shuffle=True, num_workers=2,
+                                                       pin_memory=True)
+            for _, labeled_batch in enumerate((train_loader)):
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
                 data = labeled_batch
                 x, y = data[0], data[1]
                 x = x.cuda()
@@ -236,4 +267,8 @@ if __name__ == '__main__':
                 pickle.dump(net, f)
             test_waterbirds(net, test_loader, epochs)
     else:
+<<<<<<< HEAD
         print('Pretrained model already exists.')
+=======
+        print('Pretrained model already exists.')
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8

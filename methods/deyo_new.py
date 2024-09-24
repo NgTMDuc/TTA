@@ -47,7 +47,12 @@ class DeYO_Custom(nn.Module):
         self.embedding = self.get_embedding_layer()
         self.eps = args.alpha_cap
         self.num_sample = args.num_sim
+<<<<<<< HEAD
         
+=======
+        for name, param in self.model.named_parameters():
+            print(f"{name}: requires_grad={param.requires_grad}")
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
     def generate_anchor(self):
         anchors = []
         num_classes = self.model.fc.out_features 
@@ -62,7 +67,11 @@ class DeYO_Custom(nn.Module):
 
             optimizer = torch.optim.Adam([input_embedding], lr=0.001)
 
+<<<<<<< HEAD
             for _ in range(500):
+=======
+            for _ in tqdm.tqdm(range(20)):
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
                 optimizer.zero_grad()
 
                 output = self.model.fc(input_embedding)
@@ -82,6 +91,10 @@ class DeYO_Custom(nn.Module):
         var_emb = Variable(ulb_embed, requires_grad=True).to(self.device)
         output = self.model.fc(var_emb)
         loss =  F.cross_entropy(output, pseudo_label)
+<<<<<<< HEAD
+=======
+        print(loss.requires_grad)
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
         grads = torch.autograd.grad(loss, var_emb)[0].data
         del loss, var_emb, output
         return grads
@@ -103,8 +116,13 @@ class DeYO_Custom(nn.Module):
             ulbs_embed = self.embedding(x)[:, 0, :]
         else:
             ulbs_embed = self.embedding(x)
+<<<<<<< HEAD
         print("Check ulbs embed shape", ulbs_embed.shape)
         print("Check model in features", self.model.fc.in_features)
+=======
+        # print("Check ulbs embed shape", ulbs_embed.shape)
+        # print("Check model in features", self.model.fc.in_features)
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
         predictions = torch.argmax(self.model(x).detach().cpu(), dim = 1)
         for i in tqdm.tqdm(range(B)):
             labels_count[i][predictions[i]] += 1
@@ -142,11 +160,19 @@ class DeYO_Custom(nn.Module):
                 if flag:
                     outputs, backward, final_backward = forward_and_adapt_deyo(x, iter_, self.model, self.args,
                                                                               self.optimizer, self.deyo_margin,
+<<<<<<< HEAD
                                                                               self.margin_e0, filter_ids_0, targets, flag, group)
                 else:
                     outputs = forward_and_adapt_deyo(x, iter_, self.model, self.args,
                                                     self.optimizer, self.deyo_margin,
                                                     self.margin_e0, filter_ids_0,  targets, flag, group)
+=======
+                                                                              self.margin_e0, targets, flag, group, filter_ids_0)
+                else:
+                    outputs = forward_and_adapt_deyo(x, iter_, self.model, self.args,
+                                                    self.optimizer, self.deyo_margin,
+                                                    self.margin_e0,  targets, flag, group, filter_ids_0)
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
         else:
             for _ in range(self.steps):
                 filter_ids_0 = torch.where((self.filter_sample(x, self.eps, self.anchors, self.num_sample)))
@@ -155,14 +181,24 @@ class DeYO_Custom(nn.Module):
                                                                                                     self.args, 
                                                                                                     self.optimizer, 
                                                                                                     self.deyo_margin,
+<<<<<<< HEAD
                                                                                                     self.margin_e0, filter_ids_0,
                                                                                                     targets, flag, group)
+=======
+                                                                                                    self.margin_e0,
+                                                                                                    targets, flag, group, filter_ids_0)
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
                 else:
                     outputs = forward_and_adapt_deyo(x, iter_, self.model, 
                                                     self.args, self.optimizer, 
                                                     self.deyo_margin,
+<<<<<<< HEAD
                                                     self.margin_e0, filter_ids_0,
                                                     targets, flag, group, self)
+=======
+                                                    self.margin_e0,
+                                                    targets, flag, group, filter_ids_0)
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
         if targets is None:
             if flag:
                 return outputs, backward, final_backward
@@ -189,10 +225,17 @@ def forward_and_adapt_deyo( x,
                             optimizer, 
                             deyo_margin, 
                             margin, 
+<<<<<<< HEAD
                             filter_ids_0,
                             targets=None, 
                             flag=True, 
                             group=None):
+=======
+                            targets=None, 
+                            flag=True, 
+                            group=None,
+                            filter_ids_0 = None):
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
     """Forward and adapt model input data.
     Measure entropy of the model prediction, take gradients, and update params.
     """
@@ -203,6 +246,7 @@ def forward_and_adapt_deyo( x,
     optimizer.zero_grad()
     entropys = softmax_entropy(outputs)
     # filter_ids_0 = torch.where((self.filter_sample(x, self.eps, self.anchors, self.num_sample)))
+<<<<<<< HEAD
     entropys = entropys[filter_ids_0]
     
     backward = len(entropys)
@@ -211,6 +255,18 @@ def forward_and_adapt_deyo( x,
         if targets is not None:
             return outputs, 0, 0 , 0 ,0
         return outputs, 0, 0
+=======
+    if filter_ids_0 is not None:
+        
+        entropys = entropys[filter_ids_0]
+    
+        backward = len(entropys)
+    # print(backward)
+        if backward == 0:
+            if targets is not None:
+                return outputs, 0, 0 , 0 ,0
+            return outputs, 0, 0
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
         
     # print("Done running filter 0")
         

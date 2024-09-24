@@ -4,7 +4,11 @@
 import os
 import argparse
 parser = argparse.ArgumentParser(description='Waterbirds pretrain')
+<<<<<<< HEAD
 parser.add_argument('--root_dir', default="/mnt/disk1/ducntm/DATA", help='path to data')
+=======
+parser.add_argument('--root_dir', default="/home/aiotlab/ducntm/DATA", help='path to data')
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
 parser.add_argument('--dset_dir', default='ColoredMNIST', help='name of dataset directory')
 parser.add_argument('--gpu', default='0', type=str, help='gpu index for training.')
 parser.add_argument('--seed', default=2024, type=int, help='seed for initializing training.')
@@ -91,6 +95,7 @@ def train_and_test_erm(model, args):
     device = torch.device("cuda" if use_cuda else "cpu")
 
     kwargs = {'num_workers': args.workers, 'pin_memory': True} if use_cuda else {}
+<<<<<<< HEAD
     
     all_train_loader = torch.utils.data.DataLoader(
       ColoredMNIST( root=args.root_dir, 
@@ -102,6 +107,15 @@ def train_and_test_erm(model, args):
                     batch_size=args.batch_size, 
                     shuffle=args.if_shuffle, 
                     **kwargs)
+=======
+    all_train_loader = torch.utils.data.DataLoader(
+      ColoredMNIST(root=args.root_dir, env='all_train',# flip=True,
+                   transform=transforms.Compose([
+                       transforms.ToTensor(),
+                       transforms.Normalize((0.1307, 0.1307, 0.), (0.3081, 0.3081, 0.3081))
+                     ])),
+      batch_size=args.batch_size, shuffle=args.if_shuffle, **kwargs)
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
 
     test_loader = torch.utils.data.DataLoader(
       ColoredMNIST(root=args.root_dir, env='test',# flip=True,

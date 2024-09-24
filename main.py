@@ -278,7 +278,11 @@ if __name__ == '__main__':
         elif args.model == "resnet50_bn_torch":
             net_ewc = Resnet.__dict__['resnet50'](pretrained=True)
         elif args.model == "resnet18_bn":
+<<<<<<< HEAD
             with open(os.path.join(args.data_corruption, args.cmmodel_name), 'rb') as f:
+=======
+            with open(os.path.join(args.pretrained_folder, args.cmmodel_name), 'rb') as f:
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
                 net_ewc = pickle.load(f)
         else:
             assert False, NotImplementedError
@@ -286,10 +290,17 @@ if __name__ == '__main__':
     else:
         assert False, NotImplementedError
 
+<<<<<<< HEAD
     net_ewc = eata.configure_model(net_ewc)
     params, param_names = eata.collect_params(net_ewc)
     ewc_optimizer = torch.optim.SGD(params, 0.001)
     fishers = {}
+=======
+    # net_ewc = eata.configure_model(net_ewc)
+    # params, param_names = eata.collect_params(net_ewc)
+    # ewc_optimizer = torch.optim.SGD(params, 0.001)
+    # fishers = {}
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
 
     acc1s, acc5s = [], []
     LLs, LSs, SLs, SSs = [], [], [], []
@@ -360,7 +371,11 @@ if __name__ == '__main__':
                 args.lr *= args.lr_mul
             elif args.model == 'resnet18_bn':
                 if args.dset=='ColoredMNIST':
+<<<<<<< HEAD
                     with open(os.path.join(args.data_corruption, args.cmmodel_name), 'rb') as f:
+=======
+                    with open(os.path.join(args.pretrained_folder, args.cmmodel_name), 'rb') as f:
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
                         net = pickle.load(f)
                 args.lr = (0.00025 / 64) * bs * 2 if bs < 32 else 0.00025
                 args.lr *= args.lr_mul
@@ -751,4 +766,8 @@ if __name__ == '__main__':
             wandb.log({'final_avg/top1': total_top1.avg,
                        'final_avg/top5': total_top5.avg})
 
+<<<<<<< HEAD
             wandb.finish()
+=======
+            wandb.finish()
+>>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8

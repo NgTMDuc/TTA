@@ -20,7 +20,7 @@ wandb/
 .idea/
 .ipynb_checkpoints/
 
-# data/
+data/
 
 output_check/
 output_cifar/
