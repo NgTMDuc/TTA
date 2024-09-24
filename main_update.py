@@ -47,7 +47,7 @@ from utils.cli_utils import *
 
 import torch    
 
-from methods import tent, eata, sam, sar, deyo, deyo_new
+from methods import tent, eata, sam, sar, deyo_update
 import timm
 
 import models.Res as Resnet
@@ -218,8 +218,11 @@ if __name__ == "__main__":
         os.makedirs(args.output, exist_ok=True)
         
     args.logger_name = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + "-{}-{}-level{}-seed{}".format(args.method, args.model, args.level, args.seed) 
-    if args.method == "deyo_new":
+    
+    if args.new_criteria:
+        print("------------------------------------------------------------------")
         args.logger_name += "-{}-{}".format(args.num_sim, args.alpha_cap)
+    
     args.logger_name += ".txt"
     logger = get_logger(name="project", output_directory=args.output, log_name=args.logger_name, debug=False) 
     
@@ -307,7 +310,7 @@ if __name__ == "__main__":
         args.print_freq = 50000 // 20 // bs
         
         #Load dataset
-        if args.method in ['tent', 'eata', 'sar', 'deyo', 'no_adapt', "deyo_new"]:
+        if args.method in ['tent', 'eata', 'sar', 'deyo', 'no_adapt']:
             if (args.corruption != 'mix_shifts'):
                 if args.dset == 'ImageNet-C':
                     val_dataset, val_loader = prepare_test_data(args)
@@ -350,7 +353,7 @@ if __name__ == "__main__":
             assert False, NotImplementedError
         
         #Load model
-        if args.method in ['tent', 'eata', 'sar', 'deyo', 'no_adapt', "deyo_new"]:
+        if args.method in ['tent', 'eata', 'sar', 'deyo', 'no_adapt']:
             if args.model == "resnet50_gn_timm":
                 net = timm.create_model('resnet50_gn', pretrained=True)
                 setattr(net, 'fc', net.head)
@@ -380,6 +383,9 @@ if __name__ == "__main__":
                 args.lr *= args.lr_mul
             else:
                 assert False, NotImplementedError
+            if torch.cuda.device_count() > 1:
+                print(f"Using {torch.cuda.device_count()} GPUs")
+                net = nn.DataParallel(net)
             net = net.cuda()
         else:
             assert False, NotImplementedError
@@ -484,20 +490,12 @@ if __name__ == "__main__":
             
             acc1, acc5 = validate(val_loader, adapt_model, None, args)
         elif args.method in ['deyo']:
-            net = deyo.configure_model(net)
-            params, param_names = deyo.collect_params(net)
+            net = deyo_update.configure_model(net)
+            params, param_names = deyo_update.collect_params(net)
             logger.info(param_names)
 
             optimizer = torch.optim.SGD(params, args.lr, momentum=0.9)
-            adapt_model = deyo.DeYO(net, args, optimizer, deyo_margin=args.deyo_margin, margin_e0=args.deyo_margin_e0)
-            acc1, acc5 = validate(val_loader, adapt_model, None, args)
-        elif args.method in ['deyo_new']:
-            net = deyo_new.configure_model(net)
-            params, param_names = deyo_new.collect_params(net)
-            logger.info(param_names)
-
-            optimizer = torch.optim.SGD(params, args.lr, momentum=0.9)
-            adapt_model = deyo_new.DeYO_Custom(net, args, optimizer, deyo_margin=args.deyo_margin, margin_e0=args.deyo_margin_e0)
+            adapt_model = deyo_update.DeYO(net, args, optimizer, deyo_margin=args.deyo_margin, margin_e0=args.deyo_margin_e0)
             acc1, acc5 = validate(val_loader, adapt_model, None, args)
         else:
             assert False, NotImplementedError

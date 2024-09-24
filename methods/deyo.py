@@ -89,28 +89,11 @@ def softmax_entropy(x: torch.Tensor) -> torch.Tensor:
     return -(x.softmax(1) * x.log_softmax(1)).sum(1)
 
 @torch.enable_grad()  # ensure grads in possible no grad context for testing
-<<<<<<< HEAD
-def forward_and_adapt_deyo(x, 
-                           iter_, 
-                           model, 
-                           args, 
-                           optimizer, 
-                           deyo_margin, 
-                           margin, 
-                           targets=None, 
-                           flag=True, 
-                           group=None):
-=======
 def forward_and_adapt_deyo(x, iter_, model, args, optimizer, deyo_margin, margin, targets=None, flag=True, group=None):
->>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
     """Forward and adapt model input data.
     Measure entropy of the model prediction, take gradients, and update params.
     """
     outputs = model(x)
-<<<<<<< HEAD
-    # print(outputs)
-=======
->>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
     if not flag:
         return outputs
     

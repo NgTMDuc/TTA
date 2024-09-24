@@ -13,7 +13,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 from einops import rearrange
-
+from methods.new_criteria import Update_method
 class DeYO(nn.Module):
     """DeYO online adapts a model by entropy minimization with entropy and PLPD filtering & reweighting during testing.
     Once DeYOed, a model adapts itself by updating on every forward.
@@ -32,21 +32,24 @@ class DeYO(nn.Module):
 
         self.deyo_margin = deyo_margin
         self.margin_e0 = margin_e0
-
+        self.update_method = Update_method(model, args)
     def forward(self, x, iter_, targets=None, flag=True, group=None):
         if self.episodic:
             self.reset()
-        
+        if self.new_criteria:
+            filter_ids_0 = self.update_method.filter_sample(x, self.args.alpha_cap, self.update_method.anchors, self.update_method.num_sample)
+        else:
+            filter_ids_0 = None
         if targets is None:
             for _ in range(self.steps):
                 if flag:
                     outputs, backward, final_backward = forward_and_adapt_deyo(x, iter_, self.model, self.args,
                                                                               self.optimizer, self.deyo_margin,
-                                                                              self.margin_e0, targets, flag, group)
+                                                                              self.margin_e0, targets, flag, group, filter_ids_0)
                 else:
                     outputs = forward_and_adapt_deyo(x, iter_, self.model, self.args,
                                                     self.optimizer, self.deyo_margin,
-                                                    self.margin_e0, targets, flag, group)
+                                                    self.margin_e0, targets, flag, group, filter_ids_0)
         else:
             for _ in range(self.steps):
                 if flag:
@@ -55,13 +58,13 @@ class DeYO(nn.Module):
                                                                                                     self.optimizer, 
                                                                                                     self.deyo_margin,
                                                                                                     self.margin_e0,
-                                                                                                    targets, flag, group)
+                                                                                                    targets, flag, group, filter_ids_0)
                 else:
                     outputs = forward_and_adapt_deyo(x, iter_, self.model, 
                                                     self.args, self.optimizer, 
                                                     self.deyo_margin,
                                                     self.margin_e0,
-                                                    targets, flag, group, self)
+                                                    targets, flag, group, filter_ids_0)
         if targets is None:
             if flag:
                 return outputs, backward, final_backward
@@ -80,53 +83,6 @@ class DeYO(nn.Module):
                                  self.model_state, self.optimizer_state)
         self.ema = None
 
-def generate_anchor(model):
-    anchors = []
-    num_classes = model.fc.out_features
-    pseudo_labels = []
-    
-    for class_idx in range(num_classes):
-        target_vector = torch.zeros((1, num_classes)).to(next(model.parameters()).device)
-        target_vector[0, class_idx] = 1.0
-        pseudo_labels.append(target_vector)
-        
-        input_embedding = torch.randn((1, self.model.fc.in_features)).to(next(model.parameters()).device)  
-        input_embedding.requires_grad = True
-        optimizer = torch.optim.Adam([input_embedding], lr=0.001)
-        
-        for _ in range(1000):
-            optimizer.zero_grad()
-            output = model.fc(input_embedding)
-            loss = -torch.nn.functional.log_softmax(output, dim=1)[0, class_idx]
-            
-            loss.backward()
-            optimizer.step()
-        
-        anchors.append(input_embedding.detach().clone())
-    
-    return anchors, pseudo_labels
-
-def get_embedding(embed_layer, x):
-    return embed_layer(x)
-
-def compute_ulb_grads(model, ulb_embed, pseudo_label, device):
-    var_emb = Variable(ulb_embed, requires_grad=True).to(device)
-    output = model.fc(var_emb)
-    loss = F.cross_entropy(output, pseudo_label)
-    grads = torch.autograd.grad(loss, var_emb)[0].data
-    del loss, var_emb, output
-    
-    return grads
-def calculate_optim_alpha(eps, lb_embedding, ulb_embedding, ulb_grads):
-    z = (lb_embedding - ulb_embedding)
-    alpha = (eps * z.norm(dim=1) / ulb_grads.norm(dim=1)).unsqueeze(dim=1).repeat(1, z.size(1)) * ulb_grads / (z + 1e-8)
-    return alpha
-
-def mix_feature(ulb_embed, anchor, alpha):
-    return (1 - alpha) * ulb_embed + alpha * anchor
-
-def filter_sample(model, eps, anchors, num_sample):
-    
 @torch.jit.script
 def softmax_entropy(x: torch.Tensor) -> torch.Tensor:
     """Entropy of softmax distribution from logits."""
@@ -135,17 +91,18 @@ def softmax_entropy(x: torch.Tensor) -> torch.Tensor:
     return -(x.softmax(1) * x.log_softmax(1)).sum(1)
 
 @torch.enable_grad()  # ensure grads in possible no grad context for testing
-def forward_and_adapt_deyo(x, iter_, model, args, optimizer, deyo_margin, margin, targets=None, flag=True, group=None):
+def forward_and_adapt_deyo(x, iter_, model, args, optimizer, deyo_margin, margin, targets=None, flag=True, group=None, filter_ids_0 = None):
     """Forward and adapt model input data.
     Measure entropy of the model prediction, take gradients, and update params.
     """
     outputs = model(x)
-    # print(outputs)
     if not flag:
         return outputs
     
     optimizer.zero_grad()
     entropys = softmax_entropy(outputs)
+    if args.new_criteria:
+        entropys = entropys[filter_ids_0]
     if args.filter_ent:
         filter_ids_1 = torch.where((entropys < deyo_margin))
     else:    
@@ -230,8 +187,6 @@ def forward_and_adapt_deyo(x, iter_, model, args, optimizer, deyo_margin, margin
         return outputs, backward, final_backward, corr_pl_1, corr_pl_2
     return outputs, backward, final_backward
 
-
-# Don't touch it
 def collect_params(model):
     """Collect the affine scale + shift parameters from norm layers.
     Walk the model's modules and collect all normalization parameters.

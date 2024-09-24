@@ -11,26 +11,12 @@ class Tent(nn.Module):
     """Tent adapts a model by entropy minimization during testing.
     Once tented, a model adapts itself by updating on every forward.
     """
-<<<<<<< HEAD
-    def __init__(self, 
-                 model, 
-                 optimizer, 
-                 steps=1, 
-                 episodic=False):
-        super().__init__()
-        
-=======
     def __init__(self, model, optimizer, steps=1, episodic=False):
         super().__init__()
->>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
         self.model = model
         self.optimizer = optimizer
         self.steps = steps
         assert steps > 0, "tent requires >= 1 step(s) to forward and update"
-<<<<<<< HEAD
-        print(self.steps)
-=======
->>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
         self.episodic = episodic
 
         # note: if the model is never reset, like for continual adaptation,
@@ -141,22 +127,6 @@ def configure_model(model):
 def check_model(model):
     """Check model for compatability with tent."""
     is_training = model.training
-<<<<<<< HEAD
-    
-    assert is_training, "tent needs train mode: call model.train()"
-    
-    param_grads = [p.requires_grad for p in model.parameters()]
-    has_any_params = any(param_grads)
-    has_all_params = all(param_grads)
-    
-    assert has_any_params, "tent needs params to update: " \
-                           "check which require grad"
-    
-    assert not has_all_params, "tent should not update all params: " \
-                               "check which require grad"
-    has_bn = any([isinstance(m, nn.BatchNorm2d) for m in model.modules()])
-    
-=======
     assert is_training, "tent needs train mode: call model.train()"
     param_grads = [p.requires_grad for p in model.parameters()]
     has_any_params = any(param_grads)
@@ -166,5 +136,4 @@ def check_model(model):
     assert not has_all_params, "tent should not update all params: " \
                                "check which require grad"
     has_bn = any([isinstance(m, nn.BatchNorm2d) for m in model.modules()])
->>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
     assert has_bn, "tent needs normalization for its optimization"

@@ -59,11 +59,7 @@ import models.Res as Resnet
 import pickle
 from dataset.waterbirds_dataset import WaterbirdsDataset
 from dataset.ColoredMNIST_dataset import ColoredMNIST
-<<<<<<< HEAD
-from dataset.cifar_dataset import CIFAR10C  # Assuming CIFAR10C dataset class exists
-=======
 from dataset.cifar_dataset import CIFAR10C
->>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
 
 from torchvision import datasets, transforms
 
@@ -244,23 +240,6 @@ if __name__ == '__main__':
     logger = get_logger(name="project", output_directory=args.output, log_name=args.logger_name, debug=False) 
     
     common_corruptions = [
-<<<<<<< HEAD
-                            'gaussian_noise',
-                            'shot_noise',
-                            'impulse_noise',
-                            'defocus_blur', 
-                            'glass_blur', 
-                            'motion_blur', 
-                            'zoom_blur', 
-                            'snow', 
-                            'frost', 
-                            'fog', 
-                            'brightness', 
-                            'contrast', 
-                            'elastic_transform', 
-                            'pixelate', 
-                            'jpeg_compression'
-=======
                             # 'gaussian_noise',
                             # 'shot_noise',
                             # 'impulse_noise',
@@ -276,7 +255,6 @@ if __name__ == '__main__':
                             # 'elastic_transform', 
                             # 'pixelate', 
                             # 'jpeg_compression'
->>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
                             ]
     
     
@@ -498,10 +476,7 @@ if __name__ == '__main__':
                 fisher_dataset.switch_mode(True, False)
 
                 net = eata.configure_model(net)
-<<<<<<< HEAD
-=======
                 print("Check eata config model")
->>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
                 params, param_names = eata.collect_params(net)
                 ewc_optimizer = torch.optim.SGD(params, 0.001)
                 fishers = {}
@@ -520,11 +495,8 @@ if __name__ == '__main__':
                         if param.grad is not None:
                             if iter_ > 1:
                                 fisher = param.grad.data.clone().detach() ** 2 + fishers[name][0]
-                            else:
-                                fisher = param.grad.data.clone().detach() ** 2
                             if iter_ == len(fisher_loader):
-                                fisher = fisher / iter_
-                            fishers.update({name: [fisher, param.data.clone().detach()]})
+                                fishers.update({name: [fisher, param.data.clone().detach()]})
                     ewc_optimizer.zero_grad()
                 logger.info("compute fisher matrices finished")
                 del ewc_optimizer

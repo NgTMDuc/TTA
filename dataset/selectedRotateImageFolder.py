@@ -90,17 +90,12 @@ def rotate_batch(batch, label='rand'):
 
 
 class SelectedRotateImageFolder(datasets.ImageFolder):
-<<<<<<< HEAD
-    def __init__(self, root, train_transform,
-                 original=True, rotation=True, rotation_transform=None):
-=======
     def __init__(self, 
                  root, 
                  train_transform,
                  original=True, 
                  rotation=True, 
                  rotation_transform=None):
->>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
         super(SelectedRotateImageFolder, self).__init__(root, train_transform)
         self.original = original
         self.rotation = rotation
@@ -212,17 +207,11 @@ def prepare_test_data(args, use_transforms=True):
     elif args.corruption in common_corruptions:
         print('Test on %s level %d' %(args.corruption, args.level))
         validdir = os.path.join(args.data_corruption, args.corruption, str(args.level))
-<<<<<<< HEAD
-        teset = SelectedRotateImageFolder(validdir, te_transforms_local, original=False,
-                                          rotation=False,
-                                                    rotation_transform=rotation_te_transforms)
-=======
         teset = SelectedRotateImageFolder(  validdir,
                                             te_transforms_local, 
                                             original=False,
                                             rotation=False,
                                             rotation_transform=rotation_te_transforms)
->>>>>>> 63ede5d767dfcdcad5c4f5d0d833f511e12708f8
     else:
         raise Exception('Corruption not found!')
         

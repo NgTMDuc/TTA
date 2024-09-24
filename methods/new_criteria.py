@@ -69,14 +69,14 @@ class Update_method(nn.Module):
         output = self.model.fc(var_emb)
 
         # Check if output requires gradients (this should now be True)
-        print(f"var_emb.requires_grad: {var_emb.requires_grad}")  # Should be True
-        print(f"output.requires_grad: {output.requires_grad}")    # Should be True
+        # print(f"var_emb.requires_grad: {var_emb.requires_grad}")  # Should be True
+        # print(f"output.requires_grad: {output.requires_grad}")    # Should be True
 
         # Compute the cross-entropy loss with pseudo label
         loss = F.cross_entropy(output, pseudo_label)
         
         # Check if loss requires gradients
-        print(f"loss.requires_grad: {loss.requires_grad}")  # Should be True
+        # print(f"loss.requires_grad: {loss.requires_grad}")  # Should be True
 
         # Compute gradients
         grads = torch.autograd.grad(loss, var_emb)[0]
@@ -99,7 +99,7 @@ class Update_method(nn.Module):
         return (1 - alpha) * ulb_embed + alpha * anchor
     
     def filter_sample(self, x, eps, anchors, num_sample):
-        print("Check shape of input at line 80 new_criteria.py ", x.shape)
+        # print("Check shape of input at line 80 new_criteria.py ", x.shape)
         
         B = x.shape[0]
         num_classes = self.model.fc.out_features
