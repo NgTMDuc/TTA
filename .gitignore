@@ -27,4 +27,4 @@ output_cifar/
 output_mnist/
 output_waterbirds/
 # pretrained/
-
+.json

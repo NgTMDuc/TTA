@@ -1,3 +1,3 @@
-python3 download.py
+python3 download_data/download.py
 
-python3 extract_file.py
+python3 download_data/extract_file.py
