@@ -24,9 +24,7 @@ data/
 
 output_check/
 output_cifar/
-output_cifar10/
 output_mnist/
 output_waterbirds/
-output_waterbird/
 # pretrained/
 
