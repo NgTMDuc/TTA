@@ -11,7 +11,7 @@ MODEL=resnet18_bn
 INTERVAL=30
 ETHR=1.0
 EMAR=1.0
-GPU=0,1,2,3
+GPU=1
 python3 ../main_update.py --method no_adapt --dset $DSET --wandb_interval $INTERVAL --deyo_margin $ETHR --deyo_margin_e0 $EMAR --plpd_threshold $DTHR --lr_mul $LRMUL --exp_type spurious --model $MODEL --seed $SEED --new_criteria False --pretrained_path /home/aiotlab/ducntm/DeYO/pretrained/ColoredMNIST_model.pickle  --gpu $GPU  --output ../output_mnist
 
 python3 ../main_update.py --method tent --dset $DSET --wandb_interval $INTERVAL --deyo_margin $ETHR --deyo_margin_e0 $EMAR --plpd_threshold $DTHR --lr_mul $LRMUL --exp_type spurious --model $MODEL --seed $SEED --new_criteria False --pretrained_path /home/aiotlab/ducntm/DeYO/pretrained/ColoredMNIST_model.pickle  --gpu $GPU  --output ../output_mnist

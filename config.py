@@ -9,7 +9,7 @@ def str2bool(v):
 def get_args():
     parser = argparse.ArgumentParser(description='DeYO exps')
 
-    parser.add_argument('--data_root', default='/home/aiotlab/ducntm/DATA/', help='root for all dataset')
+    parser.add_argument('--data_root', default='aiotlab/DATA/', help='root for all dataset')
     parser.add_argument('--dset', default='ImageNet-C', type=str, help='ImageNet-C, Waterbirds, ColoredMNIST, Cifar10-C')
     parser.add_argument('--output', default='../output_waterbirds/dir', help='the output directory of this experiment')
     parser.add_argument('--wandb_interval', default=100, type=int,

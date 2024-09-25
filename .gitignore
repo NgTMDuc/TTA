@@ -21,7 +21,7 @@ wandb/
 .ipynb_checkpoints/
 
 data/
-
+output/
 output_check/
 output_cifar/
 output_mnist/

@@ -4,10 +4,10 @@
 import os
 import argparse
 parser = argparse.ArgumentParser(description='Waterbirds pretrain')
-parser.add_argument('--root_dir', default="/home/aiotlab/ducntm/DATA", help='path to data')
-parser.add_argument('--dset_dir', default="Waterbirds", help='name of dataset directory')
-parser.add_argument('--pretrained_folder', default="/home/aiotlab/ducntm/DeYO/pretrained/", help='name of dataset directory')
-parser.add_argument('--gpu', default='3', type=str, help='gpu index for training.')
+parser.add_argument('--root_dir', default="/mnt/ducntm/DATA/", help='path to data')
+parser.add_argument('--dset_dir', default="Waterbirds/", help='name of dataset directory')
+parser.add_argument('--pretrained_folder', default="/mnt/ducntm/TTA/pretrained/", help='name of dataset directory')
+parser.add_argument('--gpu', default='1', type=str, help='gpu index for training.')
 parser.add_argument('--seed', default=2024, type=int, help='seed for initializing training.')
 parser.add_argument('--batch_size', default=64, type=int, help='batch_size for training.')
 parser.add_argument('--test_batch_size', default=256, type=int, help='batch_size for test.')
@@ -49,6 +49,8 @@ import models.Res as Resnet
 from tqdm import tqdm
 
 def download_dataset(root_dir):
+    # print("Root dir", root_dir)
+    
     # url from Official github https://github.com/kohpangwei/group_DRO
     url = 'https://nlp.stanford.edu/data/dro/waterbird_complete95_forest2water2.tar.gz'
     filename = os.path.join(root_dir, 'waterbird_complete95_forest2water2.tar.gz')
