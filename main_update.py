@@ -220,7 +220,7 @@ if __name__ == "__main__":
     args.logger_name = time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + "-{}-{}-level{}-seed{}".format(args.method, args.model, args.level, args.seed) 
     
     if args.new_criteria:
-        print("------------------------------------------------------------------")
+        # print("------------------------------------------------------------------")
         args.logger_name += "-{}-{}".format(args.num_sim, args.alpha_cap)
     
     args.logger_name += ".txt"
@@ -341,7 +341,7 @@ if __name__ == "__main__":
                 elif args.dset == "Cifar10-C":
                     import torchvision.transforms as transforms
                     kwargs = {'num_workers': args.workers, 'pin_memory': True}
-                    val_dataset = CIFAR10C(root="/mnt/disk1/nam2/FedDG/DSU/multi-domain-generalization/DATA/cifar10_c/", 
+                    val_dataset = CIFAR10C(root="/home/aiotlab/ducntm/DATA/cifar10_c/", 
                                            corruption_type=args.corruption, 
                                            severity=args.level,
                                            transform=transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))]))
@@ -379,13 +379,14 @@ if __name__ == "__main__":
                 elif args.dset == 'Cifar10-C':  
                     with open(args.pretrained_path, 'rb') as f:
                         net = pickle.load(f)
+                        # setattr(net, "fc", net.classifier)
                 args.lr = (0.00025 / 64) * bs * 2 if bs < 32 else 0.00025
                 args.lr *= args.lr_mul
             else:
                 assert False, NotImplementedError
-            if torch.cuda.device_count() > 1:
-                print(f"Using {torch.cuda.device_count()} GPUs")
-                net = nn.DataParallel(net)
+            # if torch.cuda.device_count() > 1:
+            print(f"Using {torch.cuda.device_count()} GPUs")
+            net = nn.DataParallel(net)
             net = net.cuda()
         else:
             assert False, NotImplementedError
@@ -429,7 +430,7 @@ if __name__ == "__main__":
                 elif args.dset == "Cifar10-C":
                     import torchvision.transforms as transforms
                     kwargs = {'num_workers': args.workers, 'pin_memory': True}
-                    fisher_dataset = CIFAR10C(root="/mnt/disk1/nam2/FedDG/DSU/multi-domain-generalization/DATA/cifar10_c/", 
+                    fisher_dataset = CIFAR10C(root="/home/aiotlab/ducntm/DATA/cifar10_c/", 
                                            corruption_type=args.corruption, 
                                            severity=args.level,
                                            transform=transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))]))

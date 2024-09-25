@@ -36,7 +36,7 @@ class DeYO(nn.Module):
     def forward(self, x, iter_, targets=None, flag=True, group=None):
         if self.episodic:
             self.reset()
-        if self.new_criteria:
+        if self.args.new_criteria:
             filter_ids_0 = self.update_method.filter_sample(x, self.args.alpha_cap, self.update_method.anchors, self.update_method.num_sample)
         else:
             filter_ids_0 = None

@@ -18,10 +18,10 @@ class Update_method(nn.Module):
         # self.method = method
         self.model = model
         
-        self.device = next(self.model.parameters()).device
+        self.device = next(self.model.module.parameters()).device
         self.args = args
         self.num_sample = self.args.num_sim
-        self.embedding = copy.deepcopy(torch.nn.Sequential(*(list(self.model.children())[:-1])))
+        self.embedding = copy.deepcopy(torch.nn.Sequential(*(list(self.model.module.children())[:-1])))
         self.anchors, self.pseudo_labels = self.generate_anchor()
         self.eps = args.alpha_cap
         self.num_sample = args.num_sim
@@ -29,14 +29,14 @@ class Update_method(nn.Module):
         
     def generate_anchor(self):
         anchors = []
-        num_classes = self.model.fc.out_features
+        num_classes = self.model.module.fc.out_features
         pseudo_labels = []
         for class_idx in range(num_classes):
             target_vector = torch.zeros((1, num_classes)).to(self.device)
             target_vector[0, class_idx] = 1.0
             pseudo_labels.append(target_vector)
             
-            input_embedding = torch.randn((1, self.model.fc.in_features)).to(self.device)
+            input_embedding = torch.randn((1, self.model.module.fc.in_features)).to(self.device)
             input_embedding.requires_grad = True
             
             optimizer = torch.optim.Adam([input_embedding], lr=0.001)
@@ -44,7 +44,7 @@ class Update_method(nn.Module):
             for _ in tqdm.tqdm(range(200)):
                 optimizer.zero_grad()
                 
-                output = self.model.fc(input_embedding)
+                output = self.model.module.fc(input_embedding)
                 
                 loss = -torch.nn.functional.log_softmax(output, dim=1)[0, class_idx]
                 
@@ -63,10 +63,10 @@ class Update_method(nn.Module):
         var_emb = ulb_embed.requires_grad_(True).to(self.device)
         
         # Set model to training mode
-        self.model.train()
+        # self.model.train()
 
         # Forward pass through the entire model, ensure no layers detach the tensors
-        output = self.model.fc(var_emb)
+        output = self.model.module.fc(var_emb)
 
         # Check if output requires gradients (this should now be True)
         # print(f"var_emb.requires_grad: {var_emb.requires_grad}")  # Should be True
@@ -102,7 +102,7 @@ class Update_method(nn.Module):
         # print("Check shape of input at line 80 new_criteria.py ", x.shape)
         
         B = x.shape[0]
-        num_classes = self.model.fc.out_features
+        num_classes = self.model.module.fc.out_features
         labels_count = torch.zeros((B, num_classes))
         
         if self.args.model == "vitbase_timm":
@@ -117,11 +117,11 @@ class Update_method(nn.Module):
             for j in range(num_classes):
                 anchor = anchors[j]
                 label = self.pseudo_labels[j]
-                ulb_embed = ulbs_embed[i].reshape(1, self.model.fc.in_features)
+                ulb_embed = ulbs_embed[i].reshape(1, self.model.module.fc.in_features)
                 grad = self.compute_ulb_grads(ulb_embed, label)
                 alpha = self.calculate_optimum_alpha(eps, anchor, ulb_embed, grad)
                 feature_mix = self.mix_feature(ulb_embed, anchor, alpha)
-                pred = torch.argmax(self.model.fc(feature_mix))
+                pred = torch.argmax(self.model.module.fc(feature_mix))
                 labels_count[i][pred] += 1
                 
         below_threshold = labels_count < num_sample

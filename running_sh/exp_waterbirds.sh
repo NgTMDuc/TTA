@@ -11,13 +11,13 @@ INTERVAL=10
 ETHR=1.0
 EMAR=1.0
 GPU=0,1,2,3
-python3 ../main_update.py --method no_adapt --dset $DSET --wandb_interval $INTERVAL --deyo_margin $ETHR --deyo_margin_e0 $EMAR --plpd_threshold $DTHR --lr_mul $LRMUL --exp_type spurious --model $MODEL --seed $SEED --new_criteria False --gpu $GPU --pretrained_path /home/aiotlab/ducntm/DeYO/pretrained/waterbirds_pretrained_model.pickle --output ../output_waterbird
+# python3 ../main_update.py --method no_adapt --dset $DSET --wandb_interval $INTERVAL --deyo_margin $ETHR --deyo_margin_e0 $EMAR --plpd_threshold $DTHR --lr_mul $LRMUL --exp_type spurious --model $MODEL --seed $SEED --new_criteria False --gpu $GPU --pretrained_path /home/aiotlab/ducntm/DeYO/pretrained/waterbirds_pretrained_model.pickle --output ../output_waterbird
 
-python3 ../main_update.py --method tent --dset $DSET --wandb_interval $INTERVAL --deyo_margin $ETHR --deyo_margin_e0 $EMAR --plpd_threshold $DTHR --lr_mul $LRMUL --exp_type spurious --model $MODEL --seed $SEED --new_criteria False --gpu $GPU --pretrained_path /home/aiotlab/ducntm/DeYO/pretrained/waterbirds_pretrained_model.pickle --output ../output_waterbird
+# python3 ../main_update.py --method tent --dset $DSET --wandb_interval $INTERVAL --deyo_margin $ETHR --deyo_margin_e0 $EMAR --plpd_threshold $DTHR --lr_mul $LRMUL --exp_type spurious --model $MODEL --seed $SEED --new_criteria False --gpu $GPU --pretrained_path /home/aiotlab/ducntm/DeYO/pretrained/waterbirds_pretrained_model.pickle --output ../output_waterbird
 
-python3 ../main_update.py --method sar --dset $DSET --wandb_interval $INTERVAL --deyo_margin $ETHR --deyo_margin_e0 $EMAR --plpd_threshold $DTHR --lr_mul $LRMUL --exp_type spurious --model $MODEL --seed $SEED --new_criteria False --gpu $GPU --pretrained_path /home/aiotlab/ducntm/DeYO/pretrained/waterbirds_pretrained_model.pickle --output ../output_waterbird
+# python3 ../main_update.py --method sar --dset $DSET --wandb_interval $INTERVAL --deyo_margin $ETHR --deyo_margin_e0 $EMAR --plpd_threshold $DTHR --lr_mul $LRMUL --exp_type spurious --model $MODEL --seed $SEED --new_criteria False --gpu $GPU --pretrained_path /home/aiotlab/ducntm/DeYO/pretrained/waterbirds_pretrained_model.pickle --output ../output_waterbird
 
-python3 ../main_update.py --method eata --dset $DSET --wandb_interval $INTERVAL --deyo_margin $ETHR --deyo_margin_e0 $EMAR --plpd_threshold $DTHR --lr_mul $LRMUL --exp_type spurious --model $MODEL --seed $SEED --new_criteria False --gpu $GPU --pretrained_path /home/aiotlab/ducntm/DeYO/pretrained/waterbirds_pretrained_model.pickle --output ../output_waterbird
+# python3 ../main_update.py --method eata --dset $DSET --wandb_interval $INTERVAL --deyo_margin $ETHR --deyo_margin_e0 $EMAR --plpd_threshold $DTHR --lr_mul $LRMUL --exp_type spurious --model $MODEL --seed $SEED --new_criteria False --gpu $GPU --pretrained_path /home/aiotlab/ducntm/DeYO/pretrained/waterbirds_pretrained_model.pickle --output ../output_waterbird
 
 python3 ../main_update.py --method eata --dset $DSET --wandb_interval $INTERVAL --deyo_margin $ETHR --deyo_margin_e0 $EMAR --plpd_threshold $DTHR --lr_mul $LRMUL --exp_type spurious --model $MODEL --seed $SEED --num_sim 3 --alpha_cap 0.05 --gpu $GPU --pretrained_path /home/aiotlab/ducntm/DeYO/pretrained/waterbirds_pretrained_model.pickle --output ../output_waterbird
 
@@ -57,7 +57,7 @@ python3 ../main_update.py --method eata --dset $DSET --wandb_interval $INTERVAL 
 
 python3 ../main_update.py --method eata --dset $DSET --wandb_interval $INTERVAL --deyo_margin $ETHR --deyo_margin_e0 $EMAR --plpd_threshold $DTHR --lr_mul $LRMUL --exp_type spurious --model $MODEL --seed $SEED --num_sim 3 --alpha_cap 0.95 --gpu $GPU --pretrained_path /home/aiotlab/ducntm/DeYO/pretrained/waterbirds_pretrained_model.pickle --output ../output_waterbird
 
-python3 ../main_update.py --method deyo --dset $DSET --wandb_interval $INTERVAL --deyo_margin $ETHR --deyo_margin_e0 $EMAR --plpd_threshold $DTHR --lr_mul $LRMUL --exp_type spurious --model $MODEL --seed $SEED --new_criteria False --gpu $GPU --pretrained_path /home/aiotlab/ducntm/DeYO/pretrained/waterbirds_pretrained_model.pickle --output ../output_waterbird
+# python3 ../main_update.py --method deyo --dset $DSET --wandb_interval $INTERVAL --deyo_margin $ETHR --deyo_margin_e0 $EMAR --plpd_threshold $DTHR --lr_mul $LRMUL --exp_type spurious --model $MODEL --seed $SEED --new_criteria False --gpu $GPU --pretrained_path /home/aiotlab/ducntm/DeYO/pretrained/waterbirds_pretrained_model.pickle --output ../output_waterbird
 
 python3 ../main_update.py --method deyo --dset $DSET --wandb_interval $INTERVAL --deyo_margin $ETHR --deyo_margin_e0 $EMAR --plpd_threshold $DTHR --lr_mul $LRMUL --exp_type spurious --model $MODEL --seed $SEED --num_sim 3 --alpha_cap 0.05 --gpu $GPU --pretrained_path /home/aiotlab/ducntm/DeYO/pretrained/waterbirds_pretrained_model.pickle --output ../output_waterbird
 

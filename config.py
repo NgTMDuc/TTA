@@ -11,7 +11,7 @@ def get_args():
 
     parser.add_argument('--data_root', default='/home/aiotlab/ducntm/DATA/', help='root for all dataset')
     parser.add_argument('--dset', default='ImageNet-C', type=str, help='ImageNet-C, Waterbirds, ColoredMNIST, Cifar10-C')
-    parser.add_argument('--output', default='../output_coloredMNIST/dir', help='the output directory of this experiment')
+    parser.add_argument('--output', default='../output_waterbirds/dir', help='the output directory of this experiment')
     parser.add_argument('--wandb_interval', default=100, type=int,
                         help='print outputs to wandb at given interval.')
     parser.add_argument('--wandb_log', default=0, type=int)
