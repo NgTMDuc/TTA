@@ -33,6 +33,7 @@ class DeYO(nn.Module):
         self.deyo_margin = deyo_margin
         self.margin_e0 = margin_e0
         self.update_method = Update_method(model, args)
+        print("Running deyo update")
     def forward(self, x, iter_, targets=None, flag=True, group=None):
         if self.episodic:
             self.reset()
@@ -103,18 +104,23 @@ def forward_and_adapt_deyo(x, iter_, model, args, optimizer, deyo_margin, margin
     entropys = softmax_entropy(outputs)
     if args.new_criteria:
         entropys = entropys[filter_ids_0]
+    else:
+        filter_ids_0 = torch.ones(x.shape[0]) > 0 
+    
     if args.filter_ent:
         filter_ids_1 = torch.where((entropys < deyo_margin))
     else:    
-        filter_ids_1 = torch.where((entropys <= math.log(1000)))
+        filter_ids_1 = torch.where((entropys <= math.log(10000000)))
+    
     entropys = entropys[filter_ids_1]
     backward = len(entropys)
+    
     if backward==0:
         if targets is not None:
             return outputs, 0, 0, 0, 0
         return outputs, 0, 0
 
-    x_prime = x[filter_ids_1]
+    x_prime = x[filter_ids_0][filter_ids_1]
     x_prime = x_prime.detach()
     if args.aug_type=='occ':
         first_mean = x_prime.view(x_prime.shape[0], x_prime.shape[1], -1).mean(dim=2)
@@ -137,9 +143,8 @@ def forward_and_adapt_deyo(x, iter_, model, args, optimizer, deyo_margin, margin
     with torch.no_grad():
         outputs_prime = model(x_prime)
     
-    prob_outputs = outputs[filter_ids_1].softmax(1)
+    prob_outputs = outputs[filter_ids_0][filter_ids_1].softmax(1)
     prob_outputs_prime = outputs_prime.softmax(1)
-
     cls1 = prob_outputs.argmax(dim=1)
 
     plpd = torch.gather(prob_outputs, dim=1, index=cls1.reshape(-1,1)) - torch.gather(prob_outputs_prime, dim=1, index=cls1.reshape(-1,1))

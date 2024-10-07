@@ -9,10 +9,10 @@ def str2bool(v):
 def get_args():
     parser = argparse.ArgumentParser(description='DeYO exps')
 
-    parser.add_argument('--data_root', default='aiotlab/DATA/', help='root for all dataset')
-    parser.add_argument('--dset', default='ImageNet-C', type=str, help='ImageNet-C, Waterbirds, ColoredMNIST, Cifar10-C')
-    parser.add_argument('--output', default='../output_waterbirds/dir', help='the output directory of this experiment')
-    parser.add_argument('--wandb_interval', default=100, type=int,
+    parser.add_argument('--data_root', default='/mnt/ducntm/DATA/', help='root for all dataset')
+    parser.add_argument('--dset', default='Waterbirds', type=str, help='ImageNet-C, Waterbirds, ColoredMNIST, Cifar10-C')
+    parser.add_argument('--output', default='../output/dir', help='the output directory of this experiment')
+    parser.add_argument('--wandb_interval', default=30, type=int,
                         help='print outputs to wandb at given interval.')
     parser.add_argument('--wandb_log', default=0, type=int)
 
@@ -38,12 +38,12 @@ def get_args():
     parser.add_argument('--d_margin', type=float, default=0.05, help='\epsilon for filtering redundant samples')
 
     # Exp Settings
-    parser.add_argument('--method', default='no_adapt', type=str, help='no_adapt, tent, sar, deyo, eata, deyo_new')
-    parser.add_argument('--model', default='vitbase_timm', type=str, help='resnet50_gn_timm or resnet50_bn_torch or vitbase_timm or resnet18_bn')
+    parser.add_argument('--method', default='deyo', type=str, help='no_adapt, tent, sar, deyo, eata, deyo_new')
+    parser.add_argument('--model', default='resnet50_bn_torch', type=str, help='resnet50_gn_timm or resnet50_bn_torch or vitbase_timm or resnet18_bn')
     parser.add_argument('--exp_type', default='normal', type=str, help='normal, mix_shifts, bs1, label_shifts, spurious')
     parser.add_argument('--patch_len', default=4, type=int, help='The number of patches per row/column')
-    parser.add_argument('--pretrained_path', default = "/home/aiotlab/ducntm/DeYO/pretrained/ColoredMNIST_model.pickle", type = str, help = "Path to pretraied model")
-    parser.add_argument('--pretrained_folder', default = "/mnt/disk1/ducntm/DeYO/pretrained", type = str)
+    parser.add_argument('--pretrained_path', default = "/mnt/ducntm/TTA/pretrained/waterbirds_pretrained_model.pickle", type = str, help = "Path to pretraied model")
+    parser.add_argument('--pretrained_folder', default = "/mnt/ducntm/TTA/pretrained/", type = str)
     # SAR parameters
     parser.add_argument('--sar_margin_e0', default=0.4, type=float, help='the threshold for reliable minimization in SAR.')
     parser.add_argument('--imbalance_ratio', default=500000, type=float, help='imbalance ratio for label shift exps, selected from [1, 1000, 2000, 3000, 4000, 5000, 500000], 1  denotes totally uniform and 500000 denotes (almost the same to Pure Class Order).')
@@ -68,10 +68,14 @@ def get_args():
 
     parser.add_argument('--topk', default=1000, type=int)
     
-    parser.add_argument('--wbmodel_name', default='waterbirds_pretrained_model1.pickle', type=str, help='Waterbirds pre-trained model path')
-    parser.add_argument('--cmmodel_name', default='ColoredMNIST_model1.pickle', type=str, help='ColoredMNIST pre-trained model path')
+    parser.add_argument('--wbmodel_name', default='waterbirds_pretrained_model.pickle', type=str, help='Waterbirds pre-trained model path')
+    parser.add_argument('--cmmodel_name', default='ColoredMNIST_model.pickle', type=str, help='ColoredMNIST pre-trained model path')
     parser.add_argument('--lr_mul', default=5, type=float, help='5 for Waterbirds, ColoredMNIST')
+    
+    #Propose criteria
+    parser.add_argument('--new_criteria', type=str2bool, default=False, nargs='?', const=True)
     parser.add_argument('--num_sim', default = 11, type = float, help = "Number of similar sample for DeYO method")
     parser.add_argument('--alpha_cap', type=float, default=0.6)
-    parser.add_argument('--new_criteria', type=str2bool, default=True, nargs='?', const=True)
+    parser.add_argument('--epoch_anchors', type = int, default = 50)
+    parser.add_argument("--save_path", type =str, default="/mnt/ducntm/TTA/methods/save.txt")
     return parser.parse_args()

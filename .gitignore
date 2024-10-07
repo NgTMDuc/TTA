@@ -26,5 +26,6 @@ output_check/
 output_cifar/
 output_mnist/
 output_waterbirds/
+output_vit/
 # pretrained/
 .json

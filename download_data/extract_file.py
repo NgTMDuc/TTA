@@ -11,10 +11,15 @@ def extract_tar_file(file_path, destination_path):
         print(f"Error occurred: {e}")
 
 #Target Directory
-destination_directory = "aiotlab/Data/ImageNet-C/"
+destination_directory = "/mnt/ducntm/DATA/ImageNet-C/"
 
-root_data = "aiotlab/Data"
-all_files = ["blur.tar", "digital.tar", "extra.tar", "noise.tar", "weather.tar"]
+root_data = "/mnt/ducntm/DATA"
+all_files = ["blur.tar", 
+            #  "digital.tar", 
+            #  "extra.tar", 
+            #  "noise.tar", 
+            #  "weather.tar"
+             ]
 
 if __name__ == "__main__":
     for file in all_files:

@@ -47,25 +47,25 @@ def main():
 
     # Specify the file ID and destination path for download
     file_id = '15aiZpiQpQzYwWWSSpwKHf7wKo65j-oF4'  # Replace with the actual file ID from Google Drive
-    destination = 'aiotlab/Data/blur.tar'  # Replace with the desired file path and name
+    destination = '/mnt/ducntm/DATA/blur.tar'  # Replace with the desired file path and name
 
     # Call the download function
     download_file(service, file_id, destination)
     
-    file_id = "15vLMParMqQDpDe34qXTq1eAwZCK4OU_K"
-    destination = "aiotlab/Data/digital.tar"
-    download_file(service, file_id, destination)
+    # file_id = "15vLMParMqQDpDe34qXTq1eAwZCK4OU_K"
+    # destination = "aiotlab/Data/digital.tar"
+    # download_file(service, file_id, destination)
     
-    file_id = "1LjYf2LMhSPfSdCYR9DFZj2N24ix84fds"
-    destination = "aiotlab/Data/extra.tar"
-    download_file(service, file_id, destination)
+    # file_id = "1LjYf2LMhSPfSdCYR9DFZj2N24ix84fds"
+    # destination = "aiotlab/Data/extra.tar"
+    # download_file(service, file_id, destination)
     
-    file_id = "1w05DJwhGz66zXTA0WK1ie9R54-ZmCtGB"
-    destination = "aiotlab/Data/noise.tar"
-    download_file(service, file_id, destination)
+    # file_id = "1w05DJwhGz66zXTA0WK1ie9R54-ZmCtGB"
+    # destination = "aiotlab/Data/noise.tar"
+    # download_file(service, file_id, destination)
     
-    file_id = "1IGdjgLrQocafIIYLs_r_skfOq24oNbB6"
-    destination = "aiotlab/Data/weather.tar"
-    download_file(service, file_id, destination)
+    # file_id = "1IGdjgLrQocafIIYLs_r_skfOq24oNbB6"
+    # destination = "aiotlab/Data/weather.tar"
+    # download_file(service, file_id, destination)
 if __name__ == '__main__':
     main()

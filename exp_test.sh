@@ -1,1 +1,0 @@
-python3 main_new.py --model vitbase_timm --method no_adapt --level 1

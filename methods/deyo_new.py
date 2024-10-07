@@ -47,8 +47,8 @@ class DeYO_Custom(nn.Module):
         self.embedding = self.get_embedding_layer()
         self.eps = args.alpha_cap
         self.num_sample = args.num_sim
-        for name, param in self.model.named_parameters():
-            print(f"{name}: requires_grad={param.requires_grad}")
+        # for name, param in self.model.named_parameters():
+            # print(f"{name}: requires_grad={param.requires_grad}")
     def generate_anchor(self):
         anchors = []
         num_classes = self.model.fc.out_features 
@@ -63,7 +63,7 @@ class DeYO_Custom(nn.Module):
 
             optimizer = torch.optim.Adam([input_embedding], lr=0.001)
 
-            for _ in tqdm.tqdm(range(20)):
+            for _ in range(200):
                 optimizer.zero_grad()
 
                 output = self.model.fc(input_embedding)

@@ -37,8 +37,9 @@ class EATA(nn.Module):
         # then skipping the state copy would save memory
         self.model_state, self.optimizer_state = \
             copy_model_and_optimizer(self.model, self.optimizer)
-
-        self.update_method = Update_method(model, args)
+        if args.new_criteria:
+            
+            self.update_method = Update_method(model, args)
         self.args = args
     def forward(self, x):
         if self.args.new_criteria:
@@ -101,25 +102,30 @@ def forward_and_adapt_eata(x,
     3. the number of reliable samples;
     4. the moving average  probability vector over all previous samples
     """
+    # print(x)
     # forward
     outputs = model(x)
     # adapt
     entropys = softmax_entropy(outputs)
     if filter_ids_0 is not None:
+        # filter_ids_0 = torch.ones(x.shape[0])
         entropys = entropys[filter_ids_0]
+    else:
+        filter_ids_0 = torch.ones(x.shape[0]) > 0 
+        # print(filter_ids_0)
     filter_ids_1 = torch.where(entropys < e_margin)
     ids1 = filter_ids_1
     ids2 = torch.where(ids1[0]>-0.1)
     entropys = entropys[filter_ids_1]
     # filter redundant samples
     if current_model_probs is not None:
-        cosine_similarities = F.cosine_similarity(current_model_probs.unsqueeze(dim=0), outputs[filter_ids_1].softmax(1), dim=1)
+        cosine_similarities = F.cosine_similarity(current_model_probs.unsqueeze(dim=0), outputs[filter_ids_0][filter_ids_1].softmax(1), dim=1)
         filter_ids_2 = torch.where(torch.abs(cosine_similarities) < d_margin)
         entropys = entropys[filter_ids_2]
         ids2 = filter_ids_2
-        updated_probs = update_model_probs(current_model_probs, outputs[filter_ids_1][filter_ids_2].softmax(1))
+        updated_probs = update_model_probs(current_model_probs, outputs[filter_ids_0][filter_ids_1][filter_ids_2].softmax(1))
     else:
-        updated_probs = update_model_probs(current_model_probs, outputs[filter_ids_1].softmax(1))
+        updated_probs = update_model_probs(current_model_probs, outputs[filter_ids_0][filter_ids_1].softmax(1))
     coeff = 1 / (torch.exp(entropys.clone().detach() - e_margin))
     #"""
     # implementation version 1, compute loss, all samples backward (some unselected are masked)
@@ -135,9 +141,9 @@ def forward_and_adapt_eata(x,
         ewc_loss = 0
         for name, param in model.named_parameters():
             if name in fishers:
-                ewc_loss += fisher_alpha * (fishers[name][0] * (param - fishers[name][1])**2).sum()
+                ewc_loss += fisher_alpha * (fishers[name][0] *( param - fishers[name][1])**2).sum()
         loss += ewc_loss
-    if x[ids1][ids2].size(0) != 0:
+    if x[filter_ids_0][ids1][ids2].size(0) != 0:
         loss.backward()
         optimizer.step()
     optimizer.zero_grad()
