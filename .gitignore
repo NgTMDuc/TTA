@@ -28,4 +28,5 @@ output_mnist/
 output_waterbirds/
 output_vit/
 # pretrained/
-.json
+*.json
+methods/save.txt
