@@ -105,20 +105,24 @@ def forward_and_adapt_eata(x,
     # print(x)
     # forward
     outputs = model(x)
+    # print(outputs.shape)
     # adapt
     entropys = softmax_entropy(outputs)
+    # print(entropys.shape)
+    # print(filter_ids_0.shape)
     if filter_ids_0 is not None:
-        # filter_ids_0 = torch.ones(x.shape[0])
-        entropys = entropys[filter_ids_0]
+        # print(filter_ids_0)
+        filter_ids_0 = torch.ones(x.shape[0]) > 0
+        # entropys = entropys[filter_ids_0]
     else:
         filter_ids_0 = torch.ones(x.shape[0]) > 0 
         # print(filter_ids_0)
-    
+    entropys = entropys[filter_ids_0]
     filter_ids_1 = torch.where(entropys < e_margin)
     ids1 = filter_ids_1
     ids2 = torch.where(ids1[0]>-0.1)
     
-    entropys = entropys[filter_ids_0][filter_ids_1]
+    entropys = entropys[ids1]
     
     # filter redundant samples
     if current_model_probs is not None:
