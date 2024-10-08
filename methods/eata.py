@@ -46,6 +46,7 @@ class EATA(nn.Module):
             filter_ids_0 = self.update_method.filter_sample(x, self.args.alpha_cap, self.update_method.anchors, self.update_method.num_sample)
         else:
             filter_ids_0 = None
+        
         if self.episodic:
             self.reset()
         if self.steps > 0:
@@ -112,7 +113,7 @@ def forward_and_adapt_eata(x,
     # print(filter_ids_0.shape)
     if filter_ids_0 is not None:
         # print(filter_ids_0)
-        filter_ids_0 = torch.ones(x.shape[0]) > 0
+        filter_ids_0 = filter_ids_0
         # entropys = entropys[filter_ids_0]
     else:
         filter_ids_0 = torch.ones(x.shape[0]) > 0 
