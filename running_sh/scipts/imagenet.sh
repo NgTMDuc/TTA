@@ -5,10 +5,10 @@ SEED=2024
 GPU=1
 ROOT=/mnt/ducntm/DATA/
 LRMUL=1
-OUTPUT=/mnt/ducntm/TTA/output_vit/
+OUTPUT=/mnt/ducntm/TTA/output/
 INTERVAL=30
 BATCH=64
-MODEL=vitbase_timm
+MODEL=resnet50_bn_torch
 PRETRAINED=/mnt/ducntm/TTA/pretrained/ColoredMNIST_model.pickle
 EXP_TYPE=normal
 #EATA
