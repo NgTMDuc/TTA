@@ -5,10 +5,10 @@ SEED=2024
 GPU=0
 ROOT=/mnt/ducntm/DATA/
 LRMUL=1
-OUTPUT=/mnt/ducntm/TTA/output_vit/
+OUTPUT=/mnt/ducntm/TTA/output_eata/output
 INTERVAL=30
 BATCH=64
-MODEL=vitbase_timm
+MODEL=resnet50_bn_torch
 PRETRAINED=/mnt/ducntm/TTA/pretrained/ColoredMNIST_model.pickle
 EXP_TYPE=normal
 #EATA
@@ -37,7 +37,7 @@ REWEIGHT_PLPD=1
 
 # python3 ../../main_update.py --exp_type $EXP_TYPE --method tent --dset $DSET --wandb_interval $INTERVAL --model $MODEL --seed $SEED --pretrained_path $PRETRAINED  --gpu $GPU --output $OUTPUT --data_root $ROOT --lr_mul $LRMUL
 
-# python3 ../../main_update.py --exp_type $EXP_TYPE --method eata --dset $DSET --wandb_interval $INTERVAL --model $MODEL --seed $SEED --pretrained_path $PRETRAINED  --gpu $GPU --output $OUTPUT --data_root $ROOT --fisher_alpha $FISHER_ALPHA --e_margin $E_MARGIN --d_margin $D_MARGIN --fisher_size $FISHER_SIZE --eata_fishers $EATA_FISHERS --lr_mul $LRMUL
+python3 ../../main_update.py --exp_type $EXP_TYPE --method eata --dset $DSET --wandb_interval $INTERVAL --model $MODEL --seed $SEED --pretrained_path $PRETRAINED  --gpu $GPU --output $OUTPUT --data_root $ROOT --fisher_alpha $FISHER_ALPHA --e_margin $E_MARGIN --d_margin $D_MARGIN --fisher_size $FISHER_SIZE --eata_fishers $EATA_FISHERS --lr_mul $LRMUL
 
 # python3 ../../main_update.py --exp_type $EXP_TYPE --method sar --dset $DSET --wandb_interval $INTERVAL --model $MODEL --seed $SEED --pretrained_path $PRETRAINED --gpu $GPU --output $OUTPUT --data_root $ROOT --sar_margin_e0  $SAR_MARGIN_E0 --imbalance_ratio $IMBALANCE_RATIO --lr_mul $LRMUL
 

@@ -1,9 +1,9 @@
 export LC_NUMERIC="C"
 
-DSET=Cifar10-C
+DSET=ImageNet-C
 SEED=2024
 GPU=1
-ROOT=/mnt/disk2/ducntm/DATA/
+ROOT=/mnt/ducntm/DATA
 LRMUL=1
 OUTPUT=/mnt/disk2/ducntm/DeYO/output_eata/
 INTERVAL=30
