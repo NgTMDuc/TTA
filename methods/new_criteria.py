@@ -46,7 +46,7 @@ class Update_method(nn.Module):
                 loss.backward()
                 optimizer.step()
             anchors.append(input_embedding.detach().clone())
-            self.log_anchor(target_vector, anchors[class_idx])
+            # self.log_anchor(target_vector, anchors[class_idx])
         return anchors, pseudo_labels
     
     def get_embedding(self, x):

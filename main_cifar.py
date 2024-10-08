@@ -341,7 +341,7 @@ if __name__ == "__main__":
                 elif args.dset == "Cifar10-C":
                     import torchvision.transforms as transforms
                     kwargs = {'num_workers': args.workers, 'pin_memory': True}
-                    val_dataset = CIFAR10C(root="/home/aiotlab/ducntm/DATA/cifar10_c/", 
+                    val_dataset = CIFAR10C(root="/mnt/disk2/ducntm/DATA/cifar10_c", 
                                            corruption_type=args.corruption, 
                                            severity=args.level,
                                            transform=transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))]))
@@ -430,7 +430,7 @@ if __name__ == "__main__":
                 elif args.dset == "Cifar10-C":
                     import torchvision.transforms as transforms
                     kwargs = {'num_workers': args.workers, 'pin_memory': True}
-                    fisher_dataset = CIFAR10C(root="/home/aiotlab/ducntm/DATA/cifar10_c/", 
+                    fisher_dataset = CIFAR10C(root="/mnt/disk2/ducntm/DATA/cifar10_c", 
                                            corruption_type=args.corruption, 
                                            severity=args.level,
                                            transform=transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))]))

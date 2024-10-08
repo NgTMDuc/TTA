@@ -113,10 +113,13 @@ def forward_and_adapt_eata(x,
     else:
         filter_ids_0 = torch.ones(x.shape[0]) > 0 
         # print(filter_ids_0)
+    
     filter_ids_1 = torch.where(entropys < e_margin)
     ids1 = filter_ids_1
     ids2 = torch.where(ids1[0]>-0.1)
-    entropys = entropys[filter_ids_1]
+    
+    entropys = entropys[filter_ids_0][filter_ids_1]
+    
     # filter redundant samples
     if current_model_probs is not None:
         cosine_similarities = F.cosine_similarity(current_model_probs.unsqueeze(dim=0), outputs[filter_ids_0][filter_ids_1].softmax(1), dim=1)
