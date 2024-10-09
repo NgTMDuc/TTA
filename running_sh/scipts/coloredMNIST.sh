@@ -5,7 +5,7 @@ SEED=2024
 GPU=0
 ROOT=/mnt/ducntm/DATA/
 LRMUL=5
-OUTPUT=/mnt/ducntm/TTA/output/
+OUTPUT=/mnt/ducntm/TTA/output_colorMNIST/
 INTERVAL=10
 BATCH=64
 MODEL=resnet18_bn
@@ -28,20 +28,20 @@ DEYO_MARGIN=0.5
 DEYO_MARGIN_0=0.4
 THRSH=0.5
 
-FILTER_ENT=0
+FILTER_ENT=1
 FILTER_PLPD=1
 REWEIGHT_ENT=1
 REWEIGHT_PLPD=1
 
-# python3 ../../main_update.py --method no_adapt --dset $DSET --wandb_interval $INTERVAL --model $MODEL --seed $SEED --pretrained_path $PRETRAINED  --gpu $GPU --output $OUTPUT --data_root $ROOT --lr_mul $LRMUL
+# python3 ../../main_update.py --exp_type $EXP_TYPE --method no_adapt --dset $DSET --wandb_interval $INTERVAL --model $MODEL --seed $SEED --pretrained_path $PRETRAINED  --gpu $GPU --output $OUTPUT --data_root $ROOT --lr_mul $LRMUL
 
-# python3 ../../main_update.py --method tent --dset $DSET --wandb_interval $INTERVAL --model $MODEL --seed $SEED --pretrained_path $PRETRAINED  --gpu $GPU --output $OUTPUT --data_root $ROOT --lr_mul $LRMUL
+# python3 ../../main_update.py --exp_type $EXP_TYPE --method tent --dset $DSET --wandb_interval $INTERVAL --model $MODEL --seed $SEED --pretrained_path $PRETRAINED  --gpu $GPU --output $OUTPUT --data_root $ROOT --lr_mul $LRMUL
 
-# python3 ../../main_update.py --method eata --dset $DSET --wandb_interval $INTERVAL --model $MODEL --seed $SEED --pretrained_path $PRETRAINED  --gpu $GPU --output $OUTPUT --data_root $ROOT --fisher_alpha $FISHER_ALPHA --e_margin $E_MARGIN --d_margin $D_MARGIN --fisher_size $FISHER_SIZE --eata_fishers $EATA_FISHERS --lr_mul $LRMUL
+# python3 ../../main_update.py --exp_type $EXP_TYPE --method eata --dset $DSET --wandb_interval $INTERVAL --model $MODEL --seed $SEED --pretrained_path $PRETRAINED  --gpu $GPU --output $OUTPUT --data_root $ROOT --fisher_alpha $FISHER_ALPHA --e_margin $E_MARGIN --d_margin $D_MARGIN --fisher_size $FISHER_SIZE --eata_fishers $EATA_FISHERS --lr_mul $LRMUL
 
-# python3 ../../main_update.py --method sar --dset $DSET --wandb_interval $INTERVAL --model $MODEL --seed $SEED --pretrained_path $PRETRAINED --gpu $GPU --output $OUTPUT --data_root $ROOT --sar_margin_e0  $SAR_MARGIN_E0 --imbalance_ratio $IMBALANCE_RATIO --lr_mul $LRMUL
+# python3 ../../main_update.py --exp_type $EXP_TYPE --method sar --dset $DSET --wandb_interval $INTERVAL --model $MODEL --seed $SEED --pretrained_path $PRETRAINED --gpu $GPU --output $OUTPUT --data_root $ROOT --sar_margin_e0  $SAR_MARGIN_E0 --imbalance_ratio $IMBALANCE_RATIO --lr_mul $LRMUL
 
-# python3 ../../main_update.py --method deyo --dset $DSET --wandb_interval $INTERVAL --model $MODEL --seed $SEED --pretrained_path $PRETRAINED --gpu $GPU --output $OUTPUT --data_root $ROOT --deyo_margin $DEYO_MARGIN --deyo_margin_e0 $DEYO_MARGIN_0 --plpd_threshold $THRSH --filter_ent $FILTER_ENT --filter_plpd $FILTER_PLPD --reweight_ent $REWEIGHT_ENT --reweight_plpd $REWEIGHT_PLPD  --lr_mul $LRMUL
+python3 ../../main_update.py --exp_type $EXP_TYPE --method deyo --dset $DSET --wandb_interval $INTERVAL --model $MODEL --seed $SEED --pretrained_path $PRETRAINED --gpu $GPU --output $OUTPUT --data_root $ROOT --deyo_margin $DEYO_MARGIN --deyo_margin_e0 $DEYO_MARGIN_0 --plpd_threshold $THRSH --filter_ent $FILTER_ENT --filter_plpd $FILTER_PLPD --reweight_ent $REWEIGHT_ENT --reweight_plpd $REWEIGHT_PLPD  --lr_mul $LRMUL
 
 #Propose
 K=3
@@ -53,5 +53,6 @@ STEP=0.05
 for i in $(seq $START $STEP $END)
 do 
     ALPHA_CAP=$(printf "%.2f" $i)
-    python3 ../../main_update.py --method deyo --dset $DSET --wandb_interval $INTERVAL --model $MODEL --seed $SEED --pretrained_path $PRETRAINED --gpu $GPU --output $OUTPUT --data_root $ROOT --deyo_margin $DEYO_MARGIN --deyo_margin_e0 $DEYO_MARGIN_0 --plpd_threshold $THRSH --filter_ent $FILTER_ENT --filter_plpd $FILTER_PLPD --reweight_ent $REWEIGHT_ENT --reweight_plpd $REWEIGHT_PLPD  --lr_mul $LRMUL --new_criteria True --alpha_cap $ALPHA_CAP --num_sim $K
+    python3 ../../main_update.py --exp_type $EXP_TYPE --method deyo --dset $DSET --wandb_interval $INTERVAL --model $MODEL --seed $SEED --pretrained_path $PRETRAINED --gpu $GPU --output $OUTPUT --data_root $ROOT --deyo_margin $DEYO_MARGIN --deyo_margin_e0 $DEYO_MARGIN_0 --plpd_threshold $THRSH --filter_ent $FILTER_ENT --filter_plpd $FILTER_PLPD --reweight_ent $REWEIGHT_ENT --reweight_plpd $REWEIGHT_PLPD  --lr_mul $LRMUL --new_criteria True --alpha_cap $ALPHA_CAP --num_sim $K
+    python3 ../../main_update.py --exp_type $EXP_TYPE --method eata --dset $DSET --wandb_interval $INTERVAL --model $MODEL --seed $SEED --pretrained_path $PRETRAINED --gpu $GPU --output $OUTPUT --data_root $ROOT --deyo_margin $DEYO_MARGIN --deyo_margin_e0 $DEYO_MARGIN_0 --plpd_threshold $THRSH --filter_ent $FILTER_ENT --filter_plpd $FILTER_PLPD --reweight_ent $REWEIGHT_ENT --reweight_plpd $REWEIGHT_PLPD  --lr_mul $LRMUL --new_criteria True --alpha_cap $ALPHA_CAP --num_sim $K
 done

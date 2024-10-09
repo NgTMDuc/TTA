@@ -1,0 +1,10 @@
+2024-10-09 10:33:57,345 INFO    : Namespace(data_root='/mnt/ducntm/DATA/', dset='ColoredMNIST', output='/mnt/ducntm/TTA/output_colorMNIST/', wandb_interval=10, wandb_log=0, seed=2024, gpu='0', debug=False, continual=False, workers=1, test_batch_size=64, if_shuffle=True, level=1, corruption='spurious correlation', eata_fishers=1, fisher_size=2000, fisher_alpha=2000.0, e_margin=0.2772588722239781, d_margin=0.05, method='eata', model='resnet18_bn', exp_type='spurious', patch_len=4, pretrained_path='/mnt/ducntm/TTA/pretrained/ColoredMNIST_model.pickle', pretrained_folder='/mnt/ducntm/TTA/pretrained/', sar_margin_e0=0.2772588722239781, imbalance_ratio=500000, aug_type='patch', occlusion_size=112, row_start=56, column_start=56, deyo_margin=0.34657359027997264, deyo_margin_e0=0.2772588722239781, plpd_threshold=0.5, fishers=0, filter_ent=0, filter_plpd=1, reweight_ent=1, reweight_plpd=1, topk=1000, wbmodel_name='waterbirds_pretrained_model.pickle', cmmodel_name='ColoredMNIST_model.pickle', lr_mul=5.0, new_criteria=True, num_sim=3.0, alpha_cap=0.3, epoch_anchors=50, save_path='/mnt/ducntm/TTA/methods/save.txt', data_corruption='/mnt/ducntm/DATA/ColoredMNIST', num_class=2, logger_name='2024-10-09-10-33-55-eata-resnet18_bn-level1-seed2024-3.0-0.3.txt', print_freq=39, lr=0.00125)
+2024-10-09 10:34:00,959 INFO    : compute fisher matrices finished
+2024-10-09 10:34:11,359 INFO    : - Detailed result under spurious correlation. LL: 28.06202, LS: 99.36624, SL: 98.14369, SS: 17.89997
+2024-10-09 10:34:11,360 INFO    : Result under spurious correlation. The adaptation accuracy of eata is  average: 60.86798
+2024-10-09 10:34:11,360 INFO    : The LL accuracy are [28.062015499920783]
+2024-10-09 10:34:11,360 INFO    : The LS accuracy are [99.36624412963101]
+2024-10-09 10:34:11,360 INFO    : The SL accuracy are [98.14369195663676]
+2024-10-09 10:34:11,360 INFO    : The SS accuracy are [17.899970749064057]
+2024-10-09 10:34:11,360 INFO    : The average accuracy are [60.86798058381316]
+2024-10-09 10:34:11,360 INFO    : The worst accuracy are [17.899970749064057]
