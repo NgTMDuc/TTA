@@ -3,13 +3,13 @@ export LC_NUMERIC="C"
 DSET=Waterbirds 
 SEED=2024
 GPU=1
-ROOT=/mnt/disk2/ducntm/DATA
+ROOT=/mnt/ducntm/DATA
 LRMUL=5
-OUTPUT=/mnt/ducntm/TTA/output_waterBird_9_10/
+OUTPUT=/mnt/ducntm/TTA/output_waterBirds_9_10_2/
 INTERVAL=10
 BATCH=64
-MODEL=resnet50_bn
-PRETRAINED=/mnt/disk2/ducntm/DeYO/pretrained/waterbirds_pretrained_model.pickle
+MODEL=resnet50_bn_torch
+PRETRAINED=/mnt/ducntm/TTA/pretrained/waterbirds_pretrained_model.pickle
 EXP_TYPE=spurious
 #EATA
 EATA_FISHERS=1
@@ -46,9 +46,9 @@ python3 ../../main_update.py --exp_type $EXP_TYPE --method deyo --dset $DSET --w
 #Propose
 K=3
 
-START=0.3
-END=0.5
-STEP=0.01
+START=0.05
+END=0.95
+STEP=0.05
 
 for i in $(seq $START $STEP $END)
 do 
